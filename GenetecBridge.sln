@@ -2,7 +2,7 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenetecUpApp", "GenetecUpApp\GenetecUpApp.csproj", "{D7B5CC91-E4FD-4994-B8E3-D7B6C92C3872}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenetecApiBridge", "GenetecApiBridge\GenetecApiBridge.csproj", "{0FB29890-71F4-4583-9C90-8AB52BF8A0C8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Genetec.Services", "Genetec.Services\Genetec.Services.csproj", "{A2EB7043-A088-4CA4-BC7C-BA2D33E0654A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -14,9 +14,9 @@ Global
 		{D7B5CC91-E4FD-4994-B8E3-D7B6C92C3872}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D7B5CC91-E4FD-4994-B8E3-D7B6C92C3872}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D7B5CC91-E4FD-4994-B8E3-D7B6C92C3872}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0FB29890-71F4-4583-9C90-8AB52BF8A0C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0FB29890-71F4-4583-9C90-8AB52BF8A0C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0FB29890-71F4-4583-9C90-8AB52BF8A0C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0FB29890-71F4-4583-9C90-8AB52BF8A0C8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A2EB7043-A088-4CA4-BC7C-BA2D33E0654A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A2EB7043-A088-4CA4-BC7C-BA2D33E0654A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A2EB7043-A088-4CA4-BC7C-BA2D33E0654A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A2EB7043-A088-4CA4-BC7C-BA2D33E0654A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
