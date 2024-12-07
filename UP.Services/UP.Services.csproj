@@ -7,12 +7,32 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
       <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Core.Data\Core.Data.csproj" />
+      <ProjectReference Include="..\Genetec.Services\Genetec.Services.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Remove="Repositories\**" />
+      <Compile Remove="Mappers\**" />
+      <Compile Remove="StudentsSyncService.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Remove="Repositories\**" />
+      <EmbeddedResource Remove="Mappers\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Repositories\**" />
+      <None Remove="Mappers\**" />
     </ItemGroup>
 
 </Project>

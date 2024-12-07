@@ -1,6 +1,6 @@
-﻿namespace Genetec.Services;
+﻿namespace Genetec.Services.Models;
 
-public record UserResponse
+public record GetUserResponse
 {
     public string EmailAddress { get; set; } = string.Empty;
     public string UserStatus { get; set; } = string.Empty;
