@@ -2,10 +2,10 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace UP.Services.Entities;
+namespace UP.Data.Entities;
 
 [Keyless]
-public partial class PsUpIdGralVw
+public partial class PsUpIdInstitVw
 {
     [Column("EMPLID")]
     [StringLength(11)]

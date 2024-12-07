@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using UP.Services.Entities;
+using UP.Data.Entities;
 
-namespace UP.Services.Context;
+namespace UP.Data.Context;
 
 public partial class UpDbContext : DbContext
 {

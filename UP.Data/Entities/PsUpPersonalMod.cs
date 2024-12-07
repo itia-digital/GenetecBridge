@@ -2,10 +2,10 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace UP.Services.Entities;
+namespace UP.Data.Entities;
 
 [Keyless]
-public partial class PsUpPersonalMd1
+public partial class PsUpPersonalMod
 {
     [Column("EMPLID")]
     [StringLength(11)]
@@ -76,9 +76,4 @@ public partial class PsUpPersonalMd1
     [StringLength(30)]
     [Unicode(false)]
     public string LocationDescr { get; set; } = null!;
-
-    [Column("DESCR100")]
-    [StringLength(17)]
-    [Unicode(false)]
-    public string Descr100 { get; set; } = null!;
 }
