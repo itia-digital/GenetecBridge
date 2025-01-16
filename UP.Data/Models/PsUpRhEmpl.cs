@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace UP.Data.Entities;
+namespace UP.Data.Models;
 
 [Keyless]
 public partial class PsUpRhEmpl

@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Genetec.Services", "Genetec.Services\Genetec.Services.csproj", "{A2EB7043-A088-4CA4-BC7C-BA2D33E0654A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Genetec.Data", "Genetec.Data\Genetec.Data.csproj", "{A2EB7043-A088-4CA4-BC7C-BA2D33E0654A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UP.Data", "UP.Data\UP.Data.csproj", "{263F975F-DCC1-4AFD-95AF-07F885F89D5A}"
 EndProject

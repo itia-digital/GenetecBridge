@@ -2,15 +2,20 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace UP.Data.Entities;
+namespace UP.Data.Models;
 
 [Keyless]
-public partial class PsUpRhIdDeptvw
+public partial class PsUpRhIdDeptdt
 {
     [Column("EMPLID")]
     [StringLength(11)]
     [Unicode(false)]
     public string Emplid { get; set; } = null!;
+
+    [Column("INSTITUTION")]
+    [StringLength(5)]
+    [Unicode(false)]
+    public string? Institution { get; set; }
 
     [Column("DESCR")]
     [StringLength(30)]
@@ -39,4 +44,7 @@ public partial class PsUpRhIdDeptvw
     [StringLength(1)]
     [Unicode(false)]
     public string HrStatus { get; set; } = null!;
+
+    [Column("LASTUPDDTTM", TypeName = "datetime")]
+    public DateTime? Lastupddttm { get; set; }
 }

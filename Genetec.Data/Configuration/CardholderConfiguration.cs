@@ -1,8 +1,8 @@
-﻿using Genetec.Services.Entities;
+﻿using Genetec.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Genetec.Services.Configuration;
+namespace Genetec.Data.Configuration;
 
 public class CardholderConfiguration : IEntityTypeConfiguration<Cardholder>
 {

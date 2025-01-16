@@ -2,10 +2,10 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace UP.Data.Entities;
+namespace UP.Data.Models;
 
 [Keyless]
-public partial class PsUpIdGralVw
+public partial class PsUpIdGralEVw
 {
     [Column("EMPLID")]
     [StringLength(11)]
@@ -48,4 +48,9 @@ public partial class PsUpIdGralVw
     [StringLength(5)]
     [Unicode(false)]
     public string Institution { get; set; } = null!;
+
+    [Column("EMAILID")]
+    [StringLength(70)]
+    [Unicode(false)]
+    public string Emailid { get; set; } = null!;
 }

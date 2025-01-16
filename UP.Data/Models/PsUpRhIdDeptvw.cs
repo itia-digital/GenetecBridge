@@ -2,38 +2,41 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace UP.Data.Entities;
+namespace UP.Data.Models;
 
 [Keyless]
-public partial class PsUpCsSiUpag
+public partial class PsUpRhIdDeptvw
 {
     [Column("EMPLID")]
     [StringLength(11)]
     [Unicode(false)]
     public string Emplid { get; set; } = null!;
 
-    [Column("INSTITUTION")]
-    [StringLength(5)]
-    [Unicode(false)]
-    public string Institution { get; set; } = null!;
-
-    [Column("SRVC_IND_CD")]
-    [StringLength(3)]
-    [Unicode(false)]
-    public string SrvcIndCd { get; set; } = null!;
-
     [Column("DESCR")]
     [StringLength(30)]
     [Unicode(false)]
     public string Descr { get; set; } = null!;
 
-    [Column("SRVC_IND_REASON")]
-    [StringLength(5)]
+    [Column("JOBCODE_DESCR")]
+    [StringLength(30)]
     [Unicode(false)]
-    public string SrvcIndReason { get; set; } = null!;
+    public string JobcodeDescr { get; set; } = null!;
+
+    [Column("GP_PAYGROUP")]
+    [StringLength(10)]
+    [Unicode(false)]
+    public string GpPaygroup { get; set; } = null!;
 
     [Column("DESCR1")]
     [StringLength(30)]
     [Unicode(false)]
     public string Descr1 { get; set; } = null!;
+
+    [Column("EFFDT", TypeName = "datetime")]
+    public DateTime Effdt { get; set; }
+
+    [Column("HR_STATUS")]
+    [StringLength(1)]
+    [Unicode(false)]
+    public string HrStatus { get; set; } = null!;
 }

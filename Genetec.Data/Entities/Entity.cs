@@ -1,4 +1,4 @@
-﻿namespace Genetec.Services.Entities;
+﻿namespace Genetec.Data.Entities;
 
 public class Entity
 {

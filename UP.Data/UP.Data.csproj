@@ -16,23 +16,30 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Core.Data\Core.Data.csproj" />
-      <ProjectReference Include="..\Genetec.Services\Genetec.Services.csproj" />
+      <ProjectReference Include="..\Genetec.Data\Genetec.Data.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Remove="Repositories\**" />
       <Compile Remove="Mappers\**" />
       <Compile Remove="StudentsSyncService.cs" />
+      <Compile Include="Repositories\ActiveEmployeesRepository.cs" />
+      <Compile Include="Repositories\ActiveProfessorsRepository.cs" />
+      <Compile Include="Repositories\ActiveStudentsRepository.cs" />
+      <Compile Include="Repositories\ApplicantsRepository.cs" />
+      <Compile Include="Repositories\InactiveStudentsRepository.cs" />
+      <Compile Include="Repositories\InactiveEmployeesRepository.cs" />
     </ItemGroup>
 
     <ItemGroup>
-      <EmbeddedResource Remove="Repositories\**" />
       <EmbeddedResource Remove="Mappers\**" />
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="Repositories\**" />
       <None Remove="Mappers\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Models\" />
     </ItemGroup>
 
 </Project>

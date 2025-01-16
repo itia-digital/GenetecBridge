@@ -2,10 +2,10 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace UP.Data.Entities;
+namespace UP.Data.Models;
 
 [Keyless]
-public partial class PsUpCsIdProgvw
+public partial class PsUpCsSiUpag
 {
     [Column("EMPLID")]
     [StringLength(11)]
@@ -17,31 +17,23 @@ public partial class PsUpCsIdProgvw
     [Unicode(false)]
     public string Institution { get; set; } = null!;
 
-    [Column("ACAD_PROG")]
-    [StringLength(5)]
+    [Column("SRVC_IND_CD")]
+    [StringLength(3)]
     [Unicode(false)]
-    public string AcadProg { get; set; } = null!;
+    public string SrvcIndCd { get; set; } = null!;
 
     [Column("DESCR")]
     [StringLength(30)]
     [Unicode(false)]
     public string Descr { get; set; } = null!;
 
-    [Column("ACAD_GROUP")]
+    [Column("SRVC_IND_REASON")]
     [StringLength(5)]
     [Unicode(false)]
-    public string AcadGroup { get; set; } = null!;
+    public string SrvcIndReason { get; set; } = null!;
 
-    [Column("PROG_STATUS")]
-    [StringLength(4)]
-    [Unicode(false)]
-    public string ProgStatus { get; set; } = null!;
-
-    [Column("EFFDT", TypeName = "datetime")]
-    public DateTime Effdt { get; set; }
-
-    [Column("OPRID")]
+    [Column("DESCR1")]
     [StringLength(30)]
     [Unicode(false)]
-    public string? Oprid { get; set; }
+    public string Descr1 { get; set; } = null!;
 }

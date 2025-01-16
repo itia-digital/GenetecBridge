@@ -1,8 +1,8 @@
 ﻿using Core.Data.Extensions;
-using Genetec.Services.Entities;
+using Genetec.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Genetec.Services.Context;
+namespace Genetec.Data.Context;
 
 public class GenetecDbContext(DbContextOptions<GenetecDbContext> options)
     : DbContext(options)
