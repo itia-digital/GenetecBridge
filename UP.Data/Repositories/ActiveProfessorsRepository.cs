@@ -7,18 +7,20 @@ namespace UP.Data.Repositories;
 
 public interface IActiveProfessorsRepository : IRepository;
 
-public class ActiveProfessorsRepository(UpDbContext context) 
+public class ActiveProfessorsRepository(UpDbContext context)
     : Repository<UpDbContext, PsUpRhIdDeptdt>(context: context),
         IActiveProfessorsRepository
 {
     protected override IQueryable<PsUpRhIdDeptdt> Query()
     {
-        string[] payGroup = ["UPAA001", "UPGA001", "UPMA001", "UPAH001", "UPGH001", "UPMH001"];
-        return Table.Where(e => e.HrStatus == "A" 
-            && payGroup.Contains(e.GpPaygroup));
+        string[] payGroup =
+            ["UPAA001", "UPGA001", "UPMA001", "UPAH001", "UPGH001", "UPMH001"];
+        return Table.Where(e => e.HrStatus == "A"
+                                && payGroup.Contains(e.GpPaygroup));
     }
 
-    public IAsyncEnumerable<List<UpRecordValue>> FetchAllRecordsInChunksAsync(int chunkSize = 1000)
+    public IAsyncEnumerable<List<UpRecordValue>> FetchAllRecordsInChunksAsync(
+        int chunkSize = 1000, CancellationToken cancellationToken = default)
     {
         IQueryable<UpRecordValue> query = Query()
             .SelectMany(t => Context.PsUpIdGralEVws
@@ -30,9 +32,11 @@ public class ActiveProfessorsRepository(UpDbContext context)
                     Name = md.FirstName,
                     LastName = md.LastName,
                     Email = md.Emailid,
-                    GenetecGroup = Constants.GenetecInactiveEmployeeGroup
+                    GenetecGroup = Constants.GenetecInactiveEmployeeGroup,
+                    Campus = md.Institution,
+                    Phone = null
                 });
-        
-        return query.FetchAllRecordsInChunksAsync(chunkSize);
+
+        return query.FetchAllRecordsInChunksAsync(chunkSize, cancellationToken);
     }
 }

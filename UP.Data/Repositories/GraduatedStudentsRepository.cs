@@ -7,7 +7,7 @@ namespace UP.Data.Repositories;
 
 public interface IGraduatedStudentRepository : IRepository;
 
-public class GraduatedStudentRepository(UpDbContext context) 
+public class GraduatedStudentRepository(UpDbContext context)
     : Repository<UpDbContext, PsUpCsIdProgdt>(context: context),
         IGraduatedStudentRepository
 {
@@ -16,7 +16,8 @@ public class GraduatedStudentRepository(UpDbContext context)
         return Table.Where(e => e.ProgStatus == "CM");
     }
 
-    public IAsyncEnumerable<List<UpRecordValue>> FetchAllRecordsInChunksAsync(int chunkSize = 1000)
+    public IAsyncEnumerable<List<UpRecordValue>> FetchAllRecordsInChunksAsync(
+        int chunkSize = 1000, CancellationToken cancellationToken = default)
     {
         IQueryable<UpRecordValue> query = Query()
             .SelectMany(t => Context.PsUpIdGralEVws
@@ -28,9 +29,11 @@ public class GraduatedStudentRepository(UpDbContext context)
                     Name = md.FirstName,
                     LastName = md.LastName,
                     Email = md.Emailid,
-                    GenetecGroup = Constants.GenetecGraduatedGroup
+                    GenetecGroup = Constants.GenetecGraduatedGroup,
+                    Campus = md.Institution,
+                    Phone = null
                 });
-        
-        return query.FetchAllRecordsInChunksAsync(chunkSize);
+
+        return query.FetchAllRecordsInChunksAsync(chunkSize, cancellationToken);
     }
 }

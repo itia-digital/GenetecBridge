@@ -1,10 +1,12 @@
-﻿namespace Core.Data.Extensions;
+﻿using System.Runtime.CompilerServices;
+
+namespace Core.Data.Extensions;
 using Microsoft.EntityFrameworkCore;
 
-public static class IQueryableExtension
+public static class QueryableExtension
 {
     public static async IAsyncEnumerable<List<T>> FetchAllRecordsInChunksAsync<T>(
-        this IQueryable<T> query, int chunkSize = 1000)
+        this IQueryable<T> query, int chunkSize = 1000, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         int offset = 0;
         bool hasMoreData;
@@ -14,7 +16,7 @@ public static class IQueryableExtension
             List<T> chunk = await query
                 .Skip(offset)
                 .Take(chunkSize)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             hasMoreData = chunk.Count == chunkSize;
             offset += chunkSize;

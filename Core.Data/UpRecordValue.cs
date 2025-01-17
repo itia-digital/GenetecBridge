@@ -2,12 +2,13 @@
 
 public record UpRecordValue
 {
-    public string Id { get; init; }
-    public Guid GenetecGroup { get; init; }
-    public string? Name { get; init; }
-    public string? LastName { get; init; }
-    public string? Email { get; init; }
-    public string? Phone { get; init; }
+    public required string Id { get; init; }
+    public required Guid GenetecGroup { get; init; }
+    public required string? Name { get; init; }
+    public required string? Campus { get; init; }
+    public required string? LastName { get; init; }
+    public required string? Email { get; init; }
+    public required string? Phone { get; init; }
 
     public string FullName =>
         string.IsNullOrEmpty(LastName) || string.IsNullOrEmpty(Name)

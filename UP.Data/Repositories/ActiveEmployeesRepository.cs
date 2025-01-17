@@ -19,7 +19,7 @@ public class ActiveEmployeesRepository(UpDbContext context)
     }
 
     public IAsyncEnumerable<List<UpRecordValue>> FetchAllRecordsInChunksAsync(
-        int chunkSize = 1000)
+        int chunkSize = 1000, CancellationToken cancellationToken = default)
     {
         IQueryable<UpRecordValue> query = Query()
             .SelectMany(t => Context.PsUpIdGralEVws
@@ -31,9 +31,11 @@ public class ActiveEmployeesRepository(UpDbContext context)
                     Email = md.Emailid,
                     Name = md.FirstName,
                     LastName = md.LastName,
-                    GenetecGroup = Constants.GenetecActiveEmployeeGroup
+                    GenetecGroup = Constants.GenetecActiveEmployeeGroup,
+                    Campus = md.Institution,
+                    Phone = null
                 });
-        
-        return query.FetchAllRecordsInChunksAsync(chunkSize);
+
+        return query.FetchAllRecordsInChunksAsync(chunkSize, cancellationToken);
     }
 }

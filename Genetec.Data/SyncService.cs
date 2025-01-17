@@ -1,82 +1,109 @@
 ﻿using System.Linq.Expressions;
+using Core.Data;
 using Genetec.Data.Context;
+using Genetec.Data.Mappers;
+using Genetec.Data.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Genetec.Data;
 
 public class SyncService(GenetecDbContext context)
 {
+    private readonly EntityMapper _entityMapper = new();
+    
+    public async Task SyncAsync(List<UpRecordValue> upItems, CancellationToken cancellationToken)
+    {
+            List<Entity> entities = [];
+            List<Cardholder> cardHolders = [];
+            List<CardholderMembership> memberships = [];
+            List<CustomFieldValue> customFieldValues = [];
+
+            foreach (UpRecordValue i in upItems)
+            {
+                var entity = _entityMapper.Map(i);
+                entities.Add(entity);
+
+                var cardHolder = new CardHolderMapper(entity.Guid).Map(i);
+                cardHolders.Add(cardHolder);
+
+                var membership = new CardholderMembership
+                {
+                    GuidGroup = i.GenetecGroup,
+                    GuidMember = entity.Guid,
+                };
+                memberships.Add(membership);
+
+                var custom = new CustomFieldValue
+                {
+                    Guid = entity.Guid,
+                    Cf30fd60cbf46340be8a4e8076dcdae701 = i.Id,
+                    Cfabe5f7d18ca0444db8477291c3ab7bdd = i.Campus
+                };
+                customFieldValues.Add(custom);
+            }
+
+            await RunAsync(entities,
+                i => new { i.Name },
+                (_, _) => new Entity
+                {
+                    Type = Constants.GenetecDefaultEntityType,
+                    Version = Constants.GenetecDefaultEntityVerion,
+                },
+                cancellationToken);
+
+            await RunAsync(cardHolders,
+                i => new { i.FirstName },
+                (_, value) => new Cardholder
+                {
+                    Email = value.Email,
+                    LastName = value.LastName,
+                    MobilePhoneNumber = value.MobilePhoneNumber,
+                },
+                cancellationToken);
+
+            // Unset the membership: applies e.g. active professor to inactive professor group
+            List<Guid> guids = entities.Select(e => e.Guid).ToList();
+            await context.CardholderMemberships
+                .Where(c => guids.Contains(c.GuidMember))
+                .ExecuteDeleteAsync(cancellationToken);
+
+            await RunAsync(memberships,
+                i => new { i.GuidMember, i.GuidGroup },
+                (_, value) => new CardholderMembership
+                {
+                    GuidGroup = value.GuidGroup,
+                    GuidMember = value.GuidMember
+                },
+                cancellationToken);
+
+            await RunAsync(customFieldValues,
+                i => new { i.Cf30fd60cbf46340be8a4e8076dcdae701 },
+                (_, value) => new CustomFieldValue
+                {
+                    Cfabe5f7d18ca0444db8477291c3ab7bdd =
+                        value.Cfabe5f7d18ca0444db8477291c3ab7bdd
+                },
+                cancellationToken);
+    }
+
     /// <summary>
     /// 
     /// </summary>
     /// <param name="data">Chunk of data to sync</param>
     /// <param name="matching">Expression to match or create</param>
     /// <param name="whenMatched">Expression to update values when found (existingValue, newValue) => finaleValue</param>
-    public async Task RunAsync<TGenetec>(
+    /// <param name="cancellationToken"></param>
+    private async Task RunAsync<TGenetec>(
         List<TGenetec> data,
         Expression<Func<TGenetec, object>> matching,
-        Expression<Func<TGenetec, TGenetec, TGenetec>> whenMatched)
+        Expression<Func<TGenetec, TGenetec, TGenetec>> whenMatched,
+        CancellationToken cancellationToken)
         where TGenetec : class
     {
         await context.Set<TGenetec>()
             .UpsertRange(data)
             .On(matching)
             .WhenMatched(whenMatched)
-            .RunAsync();
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="data">Chunk of data to sync</param>
-    /// <param name="groupBy">Ensure uniqueness of record</param>
-    /// <param name="mapRecord">Converts Up record to Genetec</param>
-    /// <param name="matching">Expression to match or create</param>
-    /// <param name="whenMatches">Expression to update values when found</param>
-    public async Task RunAsync<TUp, TGenetec>(
-        List<TUp> data,
-        Func<TUp, string> groupBy,
-        Func<TUp, TGenetec> mapRecord,
-        Expression<Func<TGenetec, object>> matching,
-        Expression<Func<TGenetec, TGenetec>> whenMatches)
-        where TGenetec : class
-    {
-        List<TGenetec> d = Compile(data, groupBy, mapRecord);
-
-        await context.Set<TGenetec>()
-            .UpsertRange(d)
-            .On(matching)
-            .WhenMatched(whenMatches)
-            .RunAsync();
-    }
-
-    /// <summary>
-    /// Perform actions to prepare information to be inserted.
-    /// </summary>
-    /// <param name="source">List of items to process</param>
-    /// <param name="groupBy">Ensure uniqueness of record</param>
-    /// <param name="mapRecord">Converts Up record to Genetec</param>
-    /// <returns></returns>
-    private List<TGenetec> Compile<TUp, TGenetec>(List<TUp> source,
-        Func<TUp, string> groupBy,
-        Func<TUp, TGenetec> mapRecord)
-    {
-        List<TUp> values = RemoveDuplicated(source, groupBy).ToList();
-        return values.Select(mapRecord).ToList();
-    }
-
-    /// <summary>
-    /// Removes duplicated info (PK), persisting last record on list
-    /// </summary>
-    /// <param name="source">List of items to process</param>
-    /// <param name="groupBy">Ensure uniqueness of record</param>
-    /// <returns></returns>
-    private IEnumerable<TUp> RemoveDuplicated<TUp>(List<TUp> source,
-        Func<TUp, string> groupBy)
-    {
-        // Removes duplicated entries
-        Dictionary<string, TUp> dictionary = new();
-        source.ForEach(x => dictionary[groupBy(x)] = x);
-        return dictionary.Values;
+            .RunAsync(cancellationToken);
     }
 }

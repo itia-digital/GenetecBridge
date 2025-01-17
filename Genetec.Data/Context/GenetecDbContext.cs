@@ -18,6 +18,8 @@ public partial class GenetecDbContext : DbContext
 
     public virtual DbSet<CardholderMembership> CardholderMemberships { get; set; }
 
+    public virtual DbSet<CustomFieldValue> CustomFieldValues { get; set; }
+
     public virtual DbSet<Entity> Entities { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -48,6 +50,13 @@ public partial class GenetecDbContext : DbContext
             entity.HasOne(d => d.GuidMemberNavigation).WithMany(p => p.CardholderMemberships)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_CardholderMembership_Entity");
+        });
+
+        modelBuilder.Entity<CustomFieldValue>(entity =>
+        {
+            entity.HasKey(e => e.Guid).IsClustered(false);
+
+            entity.Property(e => e.Guid).ValueGeneratedNever();
         });
 
         modelBuilder.Entity<Entity>(entity =>
