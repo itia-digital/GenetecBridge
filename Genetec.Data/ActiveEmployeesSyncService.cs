@@ -6,7 +6,8 @@ namespace Genetec.Data;
 public class ActiveEmployeesSyncService(SyncService service, IUpUnitOfWork unitOfWork)
 {
     /// <summary>
-    /// 
+    /// Syncs records and set the same genetec access group
+    /// to all the records
     /// </summary>
     /// <param name="limit">Set zero for no limit</param>
     /// <param name="chunkSize"></param>
@@ -20,5 +21,24 @@ public class ActiveEmployeesSyncService(SyncService service, IUpUnitOfWork unitO
         {
             await service.SyncAsync(upItems, cancellationToken);
         }
+    }
+
+    /// <summary>
+    /// Reads alusa records and deletes all records synced by
+    /// alusa process
+    /// </summary>
+    /// <param name="cancellationToken"></param>
+    public async Task ResetAsync(CancellationToken cancellationToken = default)
+    {
+        await service.ResetAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Counts alusa records
+    /// </summary>
+    /// <param name="cancellationToken"></param>
+    public async Task<int> CountSyncedAsync(CancellationToken cancellationToken = default)
+    {
+        return await service.CountSyncedAsync(cancellationToken);
     }
 }

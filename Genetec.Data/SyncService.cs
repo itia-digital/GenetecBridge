@@ -1,5 +1,6 @@
 ﻿using System.Linq.Expressions;
 using Core.Data;
+using Core.Data.Extensions;
 using Genetec.Data.Context;
 using Genetec.Data.Mappers;
 using Genetec.Data.Models;
@@ -10,80 +11,132 @@ namespace Genetec.Data;
 public class SyncService(GenetecDbContext context)
 {
     private readonly EntityMapper _entityMapper = new();
-    
-    public async Task SyncAsync(List<UpRecordValue> upItems, CancellationToken cancellationToken)
+
+    public async Task SyncAsync(List<UpRecordValue> upItems,
+        CancellationToken cancellationToken)
     {
-            List<Entity> entities = [];
-            List<Cardholder> cardHolders = [];
-            List<CardholderMembership> memberships = [];
-            List<CustomFieldValue> customFieldValues = [];
+        IEnumerable<UpRecordValue> records = upItems
+            .RemoveDuplicated(e => e.Id);
 
-            foreach (UpRecordValue i in upItems)
+        var date = DateTime.UtcNow;
+
+        List<Entity> entities = [];
+        List<Cardholder> cardHolders = [];
+        List<CustomFieldValue> customFieldValues = [];
+        List<AlusaControl> alusaControls = [];
+
+        foreach (UpRecordValue i in records)
+        {
+            var entity = _entityMapper.Map(i);
+            entities.Add(entity);
+
+            var cardHolder = new CardHolderMapper(entity.Guid).Map(i);
+            cardHolders.Add(cardHolder);
+
+            var custom = new CustomFieldValue
             {
-                var entity = _entityMapper.Map(i);
-                entities.Add(entity);
+                Guid = entity.Guid,
+                Cf30fd60cbf46340be8a4e8076dcdae701 = i.Id,
+                Cfabe5f7d18ca0444db8477291c3ab7bdd = i.Campus
+            };
+            customFieldValues.Add(custom);
 
-                var cardHolder = new CardHolderMapper(entity.Guid).Map(i);
-                cardHolders.Add(cardHolder);
+            var control = new AlusaControl
+            {
+                EntityGuid = Guid.NewGuid(),
+                UpdatedAt = date,
+                UpId = i.Id
+            };
+            alusaControls.Add(control);
+        }
 
-                var membership = new CardholderMembership
-                {
-                    GuidGroup = i.GenetecGroup,
-                    GuidMember = entity.Guid,
-                };
-                memberships.Add(membership);
+        // --- U p s e r t
+        await RunAsync(entities,
+            i => new { i.Name },
+            (_, _) => new Entity
+            {
+                Type = Constants.GenetecDefaultEntityType,
+                Version = Constants.GenetecDefaultEntityVerion,
+            },
+            cancellationToken);
 
-                var custom = new CustomFieldValue
-                {
-                    Guid = entity.Guid,
-                    Cf30fd60cbf46340be8a4e8076dcdae701 = i.Id,
-                    Cfabe5f7d18ca0444db8477291c3ab7bdd = i.Campus
-                };
-                customFieldValues.Add(custom);
-            }
+        await RunAsync(cardHolders,
+            i => new { i.FirstName },
+            (_, value) => new Cardholder
+            {
+                Email = value.Email,
+                LastName = value.LastName,
+                MobilePhoneNumber = value.MobilePhoneNumber,
+            },
+            cancellationToken);
 
-            await RunAsync(entities,
-                i => new { i.Name },
-                (_, _) => new Entity
-                {
-                    Type = Constants.GenetecDefaultEntityType,
-                    Version = Constants.GenetecDefaultEntityVerion,
-                },
-                cancellationToken);
+        await RunAsync(customFieldValues,
+            i => new { i.Cf30fd60cbf46340be8a4e8076dcdae701 },
+            (_, value) => new CustomFieldValue
+            {
+                Cfabe5f7d18ca0444db8477291c3ab7bdd =
+                    value.Cfabe5f7d18ca0444db8477291c3ab7bdd
+            },
+            cancellationToken);
 
-            await RunAsync(cardHolders,
-                i => new { i.FirstName },
-                (_, value) => new Cardholder
-                {
-                    Email = value.Email,
-                    LastName = value.LastName,
-                    MobilePhoneNumber = value.MobilePhoneNumber,
-                },
-                cancellationToken);
+        await RunAsync(alusaControls,
+            i => new { i.UpId },
+            (_, value) => new AlusaControl
+            {
+                UpdatedAt = value.UpdatedAt
+            },
+            cancellationToken);
 
-            // Unset the membership: applies e.g. active professor to inactive professor group
-            List<Guid> guids = entities.Select(e => e.Guid).ToList();
-            await context.CardholderMemberships
-                .Where(c => guids.Contains(c.GuidMember))
-                .ExecuteDeleteAsync(cancellationToken);
+        // Unset the membership: applies e.g. active professor to inactive professor group
+        List<string> upIds = entities.Select(e => e.Name).ToList();
+        List<Guid> guids = await context.Entities
+            .Where(entity => EF.Constant(upIds).Contains(entity.Name))
+            .Select(entity => entity.Guid)
+            .ToListAsync(cancellationToken);
+        List<CardholderMembership> memberships = guids
+            .Select(guid => new CardholderMembership
+            {
+                GuidGroup = upItems.First().GenetecGroup,
+                GuidMember = guid
+            })
+            .ToList();
 
-            await RunAsync(memberships,
-                i => new { i.GuidMember, i.GuidGroup },
-                (_, value) => new CardholderMembership
-                {
-                    GuidGroup = value.GuidGroup,
-                    GuidMember = value.GuidMember
-                },
-                cancellationToken);
+        /* *** If this runs will kill custom membership assigned out of the syncing process ***
+        await context.CardholderMemberships
+            .Where(entity => EF.Constant(memberships
+                    .Select(m => m.GuidMember))
+                .Contains(entity.GuidMember))
+            .ExecuteDeleteAsync(cancellationToken);
+        */
 
-            await RunAsync(customFieldValues,
-                i => new { i.Cf30fd60cbf46340be8a4e8076dcdae701 },
-                (_, value) => new CustomFieldValue
-                {
-                    Cfabe5f7d18ca0444db8477291c3ab7bdd =
-                        value.Cfabe5f7d18ca0444db8477291c3ab7bdd
-                },
-                cancellationToken);
+        await RunAsync(memberships,
+            i => new { i.GuidMember, i.GuidGroup },
+            (_, value) => new CardholderMembership
+            {
+                GuidGroup = value.GuidGroup,
+                GuidMember = value.GuidMember
+            },
+            cancellationToken);
+    }
+
+    public async Task ResetAsync(CancellationToken cancellationToken)
+    {
+        const string sql = """
+                           DELETE
+                                FROM CardholderMembership
+                                WHERE GuidMember IN (SELECT Guid FROM Entity INNER JOIN AlusaControl ON Entity.Name = UpId);
+                           DELETE FROM CustomFieldValue WHERE Guid IN (SELECT EntityGuid FROM AlusaControl);
+                           DELETE FROM Cardholder WHERE Guid IN (SELECT EntityGuid FROM AlusaControl);
+                           DELETE FROM Entity WHERE Guid IN (SELECT EntityGuid FROM AlusaControl);
+                           DELETE FROM AlusaControl WHERE UpdatedAt IS NOT NULL;
+                           """;
+
+        await context.Database.ExecuteSqlRawAsync(sql, cancellationToken);
+    }
+
+    public async Task<int> CountSyncedAsync(CancellationToken cancellationToken = default)
+    {
+        return await context.AlusaControls.CountAsync(cancellationToken);
     }
 
     /// <summary>

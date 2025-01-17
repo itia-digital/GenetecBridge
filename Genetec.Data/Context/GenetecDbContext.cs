@@ -14,6 +14,8 @@ public partial class GenetecDbContext : DbContext
     {
     }
 
+    public virtual DbSet<AlusaControl> AlusaControls { get; set; }
+
     public virtual DbSet<Cardholder> Cardholders { get; set; }
 
     public virtual DbSet<CardholderMembership> CardholderMemberships { get; set; }

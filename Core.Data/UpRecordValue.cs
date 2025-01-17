@@ -14,4 +14,10 @@ public record UpRecordValue
         string.IsNullOrEmpty(LastName) || string.IsNullOrEmpty(Name)
             ? Name ?? LastName ?? Id
             : $"{Name} {LastName}";
+
+    public override string ToString()
+    {
+        return
+            $"{{ {nameof(Id)}: {Id}, {nameof(GenetecGroup)}: {GenetecGroup}, {nameof(Name)}: {Name}, {nameof(Campus)}: {Campus}, {nameof(LastName)}: {LastName}, {nameof(Email)}: {Email}, {nameof(Phone)}: {Phone} }}";
+    }
 }
