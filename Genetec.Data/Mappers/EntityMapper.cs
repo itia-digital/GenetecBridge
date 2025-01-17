@@ -15,6 +15,7 @@ public class EntityMapper : IMapper<UpRecordValue, Entity>
             Type = Constants.GenetecDefaultEntityType,
             Version = Constants.GenetecDefaultEntityVerion,
             CreationTime = DateTime.UtcNow,
+            Description = string.Empty,
             SubType = 0,
             Flags = 0
         };

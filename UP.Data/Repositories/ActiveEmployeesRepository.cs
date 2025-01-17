@@ -1,5 +1,6 @@
 ﻿using Core.Data;
 using Core.Data.Extensions;
+using Microsoft.EntityFrameworkCore;
 using UP.Data.Context;
 using UP.Data.Models;
 
@@ -15,11 +16,11 @@ public class ActiveEmployeesRepository(UpDbContext context)
     {
         string[] payGroup = ["UPA001", "UPC001", "UPE001", "UPG001", "UPM001"];
         return Table.Where(e => e.HrStatus == "A"
-                                && payGroup.Contains(e.GpPaygroup));
+                                && EF.Constant(payGroup).Contains(e.GpPaygroup));
     }
 
     public IAsyncEnumerable<List<UpRecordValue>> FetchAllRecordsInChunksAsync(
-        int chunkSize = 1000, CancellationToken cancellationToken = default)
+        int limit = 0, int chunkSize = 1000, CancellationToken cancellationToken = default)
     {
         IQueryable<UpRecordValue> query = Query()
             .SelectMany(t => Context.PsUpIdGralEVws
@@ -36,6 +37,6 @@ public class ActiveEmployeesRepository(UpDbContext context)
                     Phone = null
                 });
 
-        return query.FetchAllRecordsInChunksAsync(chunkSize, cancellationToken);
+        return query.FetchAllRecordsInChunksAsync(limit, chunkSize, cancellationToken);
     }
 }

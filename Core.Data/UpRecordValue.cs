@@ -13,5 +13,5 @@ public record UpRecordValue
     public string FullName =>
         string.IsNullOrEmpty(LastName) || string.IsNullOrEmpty(Name)
             ? Name ?? LastName ?? Id
-            : $"{LastName} {Name}";
+            : $"{Name} {LastName}";
 }

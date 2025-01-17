@@ -4,7 +4,8 @@ namespace Core.Data;
 
 public interface IRepository
 {
-    IAsyncEnumerable<List<UpRecordValue>> FetchAllRecordsInChunksAsync(int chunkSize = 1000, CancellationToken cancellationToken = default);
+    IAsyncEnumerable<List<UpRecordValue>> FetchAllRecordsInChunksAsync(int limit = 0,
+        int chunkSize = 1000, CancellationToken cancellationToken = default);
 }
 
 public abstract class Repository<TContext, TEntity>(TContext context)

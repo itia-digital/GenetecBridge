@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UP.Data", "UP.Data\UP.Data.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core.Data", "Core.Data\Core.Data.csproj", "{89D7AA5A-D702-4573-91BF-6A8E89BACEC0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenetecBridgeTester", "GenetecBridgeTester\GenetecBridgeTester.csproj", "{097801BE-1112-49AD-92F6-EE3DF6B1AB14}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{89D7AA5A-D702-4573-91BF-6A8E89BACEC0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{89D7AA5A-D702-4573-91BF-6A8E89BACEC0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{89D7AA5A-D702-4573-91BF-6A8E89BACEC0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{097801BE-1112-49AD-92F6-EE3DF6B1AB14}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{097801BE-1112-49AD-92F6-EE3DF6B1AB14}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{097801BE-1112-49AD-92F6-EE3DF6B1AB14}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{097801BE-1112-49AD-92F6-EE3DF6B1AB14}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

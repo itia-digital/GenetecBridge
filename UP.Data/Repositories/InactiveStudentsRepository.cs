@@ -1,5 +1,6 @@
 ﻿using Core.Data;
 using Core.Data.Extensions;
+using Microsoft.EntityFrameworkCore;
 using UP.Data.Context;
 using UP.Data.Models;
 
@@ -14,11 +15,12 @@ public class InactiveStudentsRepository(UpDbContext context)
     protected override IQueryable<PsUpCsIdProgdt> Query()
     {
         string[] statuses = ["CN', 'DC', 'DM', 'LA', 'SP"];
-        return Table.Where(e => statuses.Contains(e.ProgStatus));
+        return Table.Where(e => EF.Constant(statuses).Contains(e.ProgStatus));
     }
 
     public IAsyncEnumerable<List<UpRecordValue>> FetchAllRecordsInChunksAsync(
-        int chunkSize = 1000, CancellationToken cancellationToken = default)
+        int limit = 0, int chunkSize = 1000,
+        CancellationToken cancellationToken = default)
     {
         IQueryable<UpRecordValue> query = Query()
             .SelectMany(t => Context.PsUpIdGralEVws
@@ -35,6 +37,6 @@ public class InactiveStudentsRepository(UpDbContext context)
                     Phone = null
                 });
 
-        return query.FetchAllRecordsInChunksAsync(chunkSize, cancellationToken);
+        return query.FetchAllRecordsInChunksAsync(limit, chunkSize, cancellationToken);
     }
 }

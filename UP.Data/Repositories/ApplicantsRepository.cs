@@ -17,7 +17,7 @@ public class ApplicantsRepositoryRepository(UpDbContext context)
     }
 
     public IAsyncEnumerable<List<UpRecordValue>> FetchAllRecordsInChunksAsync(
-        int chunkSize = 1000, CancellationToken cancellationToken = default)
+        int limit = 0, int chunkSize = 1000, CancellationToken cancellationToken = default)
     {
         IQueryable<UpRecordValue> query = Query()
             .SelectMany(t => Context.PsUpIdGralEVws
@@ -34,6 +34,6 @@ public class ApplicantsRepositoryRepository(UpDbContext context)
                     Phone = null
                 });
 
-        return query.FetchAllRecordsInChunksAsync(chunkSize, cancellationToken);
+        return query.FetchAllRecordsInChunksAsync(limit, chunkSize, cancellationToken);
     }
 }

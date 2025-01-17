@@ -1,5 +1,6 @@
 ﻿using Core.Data;
 using Core.Data.Extensions;
+using Microsoft.EntityFrameworkCore;
 using UP.Data.Context;
 using UP.Data.Models;
 
@@ -16,11 +17,11 @@ public class ActiveProfessorsRepository(UpDbContext context)
         string[] payGroup =
             ["UPAA001", "UPGA001", "UPMA001", "UPAH001", "UPGH001", "UPMH001"];
         return Table.Where(e => e.HrStatus == "A"
-                                && payGroup.Contains(e.GpPaygroup));
+                                && EF.Constant(payGroup).Contains(e.GpPaygroup));
     }
 
     public IAsyncEnumerable<List<UpRecordValue>> FetchAllRecordsInChunksAsync(
-        int chunkSize = 1000, CancellationToken cancellationToken = default)
+        int limit = 0, int chunkSize = 1000, CancellationToken cancellationToken = default)
     {
         IQueryable<UpRecordValue> query = Query()
             .SelectMany(t => Context.PsUpIdGralEVws
@@ -32,11 +33,11 @@ public class ActiveProfessorsRepository(UpDbContext context)
                     Name = md.FirstName,
                     LastName = md.LastName,
                     Email = md.Emailid,
-                    GenetecGroup = Constants.GenetecInactiveEmployeeGroup,
+                    GenetecGroup = Constants.GenetecActiveProfessorGroup,
                     Campus = md.Institution,
                     Phone = null
                 });
 
-        return query.FetchAllRecordsInChunksAsync(chunkSize, cancellationToken);
+        return query.FetchAllRecordsInChunksAsync(limit, chunkSize, cancellationToken);
     }
 }
