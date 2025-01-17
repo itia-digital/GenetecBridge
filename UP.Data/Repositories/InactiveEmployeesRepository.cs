@@ -1,4 +1,5 @@
 ﻿using Core.Data;
+using Core.Data.Extensions;
 using UP.Data.Context;
 using UP.Data.Models;
 
@@ -7,16 +8,34 @@ namespace UP.Data.Repositories;
 /// <summary>
 /// Retired employees
 /// </summary>
-public interface IRetiredEmployeesRepository : IRepository<PsUpRhIdDeptdt>;
+public interface IInactiveEmployeesRepository : IRepository;
 
 public class InactiveEmployeesRepository(UpDbContext context) 
     : Repository<UpDbContext, PsUpRhIdDeptdt>(context: context),
-        IRetiredEmployeesRepository
+        IInactiveEmployeesRepository
 {
-    public override IQueryable<PsUpRhIdDeptdt> Query()
+    protected override IQueryable<PsUpRhIdDeptdt> Query()
     {
         string[] payGroup = ["UPAP001", "UPGP001", "UPMP001"];
         return Table.Where(e => e.HrStatus == "I" 
                                 && payGroup.Contains(e.GpPaygroup));
+    }
+
+    public IAsyncEnumerable<List<UpRecordValue>> FetchAllRecordsInChunksAsync(int chunkSize = 1000)
+    {
+        IQueryable<UpRecordValue> query = Query()
+            .SelectMany(t => Context.PsUpIdGralEVws
+                    .Where(e => e.Emplid == t.Emplid)
+                    .DefaultIfEmpty(),
+                (src, md) => new UpRecordValue
+                {
+                    Id = src.Emplid,
+                    Name = md.FirstName,
+                    LastName = md.LastName,
+                    Email = md.Emailid,
+                    GenetecGroup = Constants.GenetecInactiveEmployeeGroup
+                });
+        
+        return query.FetchAllRecordsInChunksAsync(chunkSize);
     }
 }

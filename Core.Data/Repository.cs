@@ -2,17 +2,16 @@
 
 namespace Core.Data;
 
-public interface IRepository<out T> where T : class
+public interface IRepository
 {
-    public IQueryable<T> Query();
+    IAsyncEnumerable<List<UpRecordValue>> FetchAllRecordsInChunksAsync(int chunkSize = 1000);
 }
 
-public abstract class Repository<TContext, T>(TContext context)
+public abstract class Repository<TContext, TEntity>(TContext context)
     where TContext : DbContext
-    where T : class
+    where TEntity : class
 {
     protected readonly TContext Context = context;
-    protected readonly DbSet<T> Table = context.Set<T>();
-    
-    public virtual IQueryable<T> Query() => Table;
+    protected readonly DbSet<TEntity> Table = context.Set<TEntity>();
+    protected virtual IQueryable<TEntity> Query() => Table;
 }

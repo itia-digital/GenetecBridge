@@ -4,41 +4,49 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Genetec.Data;
 
-public abstract class SyncService<TUp, TGenetec>(GenetecDbContext context) where TGenetec : class
+public class SyncService(GenetecDbContext context)
 {
     /// <summary>
-    /// Ensure uniqueness of record
+    /// 
     /// </summary>
-    protected abstract Func<TUp, string> GroupBy { get; }
-
-    /// <summary>
-    /// Converts Up record to Genetec
-    /// </summary>
-    protected abstract Func<TUp, TGenetec> MapRecord { get; }
-
-    /// <summary>
-    /// Converts Up record to Genetec
-    /// </summary>
-    protected abstract Expression<Func<TGenetec, object>> MatchingValues { get; }
-
-    /// <summary>
-    /// Converts Up record to Genetec
-    /// </summary>
-    protected abstract Expression<Func<TGenetec, TGenetec>> WhenMatches { get; }
+    /// <param name="data">Chunk of data to sync</param>
+    /// <param name="matching">Expression to match or create</param>
+    /// <param name="whenMatched">Expression to update values when found (existingValue, newValue) => finaleValue</param>
+    public async Task RunAsync<TGenetec>(
+        List<TGenetec> data,
+        Expression<Func<TGenetec, object>> matching,
+        Expression<Func<TGenetec, TGenetec, TGenetec>> whenMatched)
+        where TGenetec : class
+    {
+        await context.Set<TGenetec>()
+            .UpsertRange(data)
+            .On(matching)
+            .WhenMatched(whenMatched)
+            .RunAsync();
+    }
 
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="query"></param>
-    public async Task RunAsync(IQueryable<TUp> query)
+    /// <param name="data">Chunk of data to sync</param>
+    /// <param name="groupBy">Ensure uniqueness of record</param>
+    /// <param name="mapRecord">Converts Up record to Genetec</param>
+    /// <param name="matching">Expression to match or create</param>
+    /// <param name="whenMatches">Expression to update values when found</param>
+    public async Task RunAsync<TUp, TGenetec>(
+        List<TUp> data,
+        Func<TUp, string> groupBy,
+        Func<TUp, TGenetec> mapRecord,
+        Expression<Func<TGenetec, object>> matching,
+        Expression<Func<TGenetec, TGenetec>> whenMatches)
+        where TGenetec : class
     {
-        List<TUp> data = await query.ToListAsync();
-        List<TGenetec> d = Compile(data);
-        
+        List<TGenetec> d = Compile(data, groupBy, mapRecord);
+
         await context.Set<TGenetec>()
             .UpsertRange(d)
-            .On(MatchingValues)
-            .WhenMatched(WhenMatches)
+            .On(matching)
+            .WhenMatched(whenMatches)
             .RunAsync();
     }
 
@@ -46,23 +54,29 @@ public abstract class SyncService<TUp, TGenetec>(GenetecDbContext context) where
     /// Perform actions to prepare information to be inserted.
     /// </summary>
     /// <param name="source">List of items to process</param>
+    /// <param name="groupBy">Ensure uniqueness of record</param>
+    /// <param name="mapRecord">Converts Up record to Genetec</param>
     /// <returns></returns>
-    private List<TGenetec> Compile(List<TUp> source)
+    private List<TGenetec> Compile<TUp, TGenetec>(List<TUp> source,
+        Func<TUp, string> groupBy,
+        Func<TUp, TGenetec> mapRecord)
     {
-        List<TUp> values = RemoveDuplicated(source).ToList();
-        return values.Select(MapRecord).ToList();
+        List<TUp> values = RemoveDuplicated(source, groupBy).ToList();
+        return values.Select(mapRecord).ToList();
     }
 
     /// <summary>
     /// Removes duplicated info (PK), persisting last record on list
     /// </summary>
     /// <param name="source">List of items to process</param>
+    /// <param name="groupBy">Ensure uniqueness of record</param>
     /// <returns></returns>
-    private IEnumerable<TUp> RemoveDuplicated(List<TUp> source)
+    private IEnumerable<TUp> RemoveDuplicated<TUp>(List<TUp> source,
+        Func<TUp, string> groupBy)
     {
         // Removes duplicated entries
         Dictionary<string, TUp> dictionary = new();
-        source.ForEach(x => dictionary[GroupBy(x)] = x);
+        source.ForEach(x => dictionary[groupBy(x)] = x);
         return dictionary.Values;
     }
 }
