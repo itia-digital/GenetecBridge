@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 namespace UP.Data.Models;
 
 [Keyless]
-public partial class PsUpIdGralEVw
+public partial class PsUpIdGralTVw
 {
     [Column("EMPLID")]
     [StringLength(11)]
@@ -32,25 +32,46 @@ public partial class PsUpIdGralEVw
     [Unicode(false)]
     public string Sex { get; set; } = null!;
 
-    [Column("UP_COUNT_PROG")]
-    public int? UpCountProg { get; set; }
-
-    [Column("UP_COUNT_EGR")]
-    public int? UpCountEgr { get; set; }
-
-    [Column("UP_COUNT_RH")]
-    public int? UpCountRh { get; set; }
-
-    [Column("UP_COUNT_SI")]
-    public int? UpCountSi { get; set; }
-
     [Column("INSTITUTION")]
-    [StringLength(5)]
+    [StringLength(10)]
     [Unicode(false)]
     public string Institution { get; set; } = null!;
 
     [Column("EMAILID")]
     [StringLength(70)]
     [Unicode(false)]
-    public string Emailid { get; set; } = null!;
+    public string? Emailid { get; set; }
+
+    [Column("ACAD_PROG")]
+    [StringLength(5)]
+    [Unicode(false)]
+    public string AcadProg { get; set; } = null!;
+
+    [Column("DESCR")]
+    [StringLength(30)]
+    [Unicode(false)]
+    public string Descr { get; set; } = null!;
+
+    [Column("GP_PAYGROUP")]
+    [StringLength(10)]
+    [Unicode(false)]
+    public string GpPaygroup { get; set; } = null!;
+
+    [Column("STATUS_FIELD")]
+    [StringLength(4)]
+    [Unicode(false)]
+    public string StatusField { get; set; } = null!;
+
+    [Column("PROG_REASON")]
+    [StringLength(4)]
+    [Unicode(false)]
+    public string ProgReason { get; set; } = null!;
+
+    [Column("LASTUPDDTTM", TypeName = "datetime")]
+    public DateTime? Lastupddttm { get; set; }
+
+    [Column("ASGMT_TYPE")]
+    [StringLength(4)]
+    [Unicode(false)]
+    public string AsgmtType { get; set; } = null!;
 }

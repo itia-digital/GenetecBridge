@@ -4,14 +4,14 @@ public static class Constants
 {
     public static byte GenetecDefaultEntityType = 7;
     public static int GenetecDefaultEntityVerion = 23296;
-    // staff
-    public static Guid GenetecActiveEmployeeGroup = Guid.Parse("17DDEE1D-6A08-440F-A79B-8E049C93C289");
-    public static Guid GenetecActiveProfessorGroup = Guid.Parse("17DDEE1D-6A08-440F-A79B-8E049C93C289");
-    public static Guid GenetecInactiveEmployeeGroup = Guid.Parse("17DDEE1D-6A08-440F-A79B-8E049C93C289");
+    // staff Entity.Type = 8
+    public static Guid GenetecActiveEmployeeGroup = Guid.Parse("ae1c697e-1049-4b86-ad2f-0ba8dfaaf2ee");
+    public static Guid GenetecActiveProfessorGroup = Guid.Parse("607c0999-7891-4734-be30-7226a018ce9a");
+    public static Guid GenetecInactiveEmployeeGroup = Guid.Parse("c9c54c2d-1440-41ac-9a7c-df386c1bb607");
     // students
-    public static Guid GenetecActiveStudentGroup = Guid.Parse("17DDEE1D-6A08-440F-A79B-8E049C93C289");
-    public static Guid GenetecInactiveStudentGroup = Guid.Parse("17DDEE1D-6A08-440F-A79B-8E049C93C289");
-    public static Guid GenetecApplicantGroup = Guid.Parse("17DDEE1D-6A08-440F-A79B-8E049C93C289");
-    public static Guid GenetecGraduatedGroup = Guid.Parse("17DDEE1D-6A08-440F-A79B-8E049C93C289");
+    public static Guid GenetecActiveStudentGroup = Guid.Parse("e002dde0-de2b-4ca0-acfc-ccde29455310");
+    public static Guid GenetecInactiveStudentGroup = Guid.Parse("e002dde0-de2b-4ca0-acfc-ccde29455310");
+    public static Guid GenetecGraduatedGroup = Guid.Parse("e002dde0-de2b-4ca0-acfc-ccde29455310");
+    public static Guid GenetecApplicantGroup = Guid.Parse("00000000-0000-0000-0000-00000000000d");
     
 }

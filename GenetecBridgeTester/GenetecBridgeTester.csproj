@@ -21,7 +21,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Genetec.Data\Genetec.Data.csproj" />
+        <ProjectReference Include="..\Genetec.Data\Genetec.Data.csproj"/>
     </ItemGroup>
 
 </Project>

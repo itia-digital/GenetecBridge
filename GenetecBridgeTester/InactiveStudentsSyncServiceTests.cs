@@ -7,17 +7,17 @@ using UP.Data.Context;
 
 namespace GenetecBridgeTester;
 
-public class ActiveEmployeesSyncServiceTests
+public class InactiveStudentsSyncServiceTests
 {
     private readonly GenetecDbContext _context = new();
 
     private readonly ISyncService _service;
     private readonly SyncWorker _sync;
 
-    public ActiveEmployeesSyncServiceTests()
+    public InactiveStudentsSyncServiceTests()
     {
         _sync = new SyncWorker(_context);
-        _service = new ActiveEmployeesSyncService(_sync,
+        _service = new InactiveStudentsSyncService(_sync,
             new UpUnitOfWork(new UpDbContext()));
     }
 
@@ -28,7 +28,7 @@ public class ActiveEmployeesSyncServiceTests
     {
         // arrange
         await _sync.ResetAsync();
-        DateTime now = DateTime.UtcNow;
+        DateTime now = DateTime.Now;
 
         // act
         await _service.SyncAsync(now, limit, chunkSize);

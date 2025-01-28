@@ -1,6 +1,5 @@
 ﻿using Core.Data;
 using Genetec.Data.Models;
-using UP.Data.Repositories;
 
 namespace Genetec.Data.Mappers;
 
@@ -10,10 +9,12 @@ public class CardHolderMapper(Guid entityId) : IMapper<UpRecordValue, Cardholder
     {
         return new Cardholder
         {
-            Guid = entityId, 
-            FirstName = source.Id,
-            LastName = source.FullName,
-            Status = 0,
+            Guid = entityId,
+            FirstName = source.Name,
+            LastName = source.LastName,
+            Status = source.IsActive
+                ? (byte)0
+                : (byte)1,
             ExpirationMode = 0,
             ExpirationDuration = 0,
             ExpirationDate = null,
@@ -27,9 +28,10 @@ public class CardHolderMapper(Guid entityId) : IMapper<UpRecordValue, Cardholder
             MandatoryEscort = false,
             CanEscort = false,
             VisitDate = null,
-            MobilePhoneNumber = source.Phone,
+            MobilePhoneNumber = source.Phone ?? string.Empty,
             Escort2Navigation = null,
-            EscortNavigation = null
+            EscortNavigation = null,
+            UpId = source.Id
         };
     }
 }

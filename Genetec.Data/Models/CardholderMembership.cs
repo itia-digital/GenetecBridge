@@ -7,13 +7,13 @@ namespace Genetec.Data.Models;
 [PrimaryKey("GuidGroup", "GuidMember")]
 [Table("CardholderMembership")]
 [Index("GuidMember", Name = "IX_CardholderMembership_GuidMember")]
-public partial record CardholderMembership
+public record CardholderMembership
 {
-    [Key]
-    public Guid GuidGroup { get; set; }
+    [Key] public Guid GuidGroup { get; set; }
 
-    [Key]
-    public Guid GuidMember { get; set; }
+    [Key] public Guid GuidMember { get; set; }
+    
+    [StringLength(10)] public string? UpId { get; set; }
 
     [ForeignKey("GuidMember")]
     [InverseProperty("CardholderMemberships")]

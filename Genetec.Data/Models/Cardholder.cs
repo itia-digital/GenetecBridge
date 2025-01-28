@@ -13,16 +13,13 @@ namespace Genetec.Data.Models;
 [Index("ExpirationMode", Name = "IX_CredentialExpirationMode")]
 [Index("Escort", Name = "IX_Escort")]
 [Index("Escort2", Name = "IX_Escort2")]
-public partial record Cardholder
+public record Cardholder
 {
-    [Key]
-    public Guid Guid { get; set; }
+    [Key] public Guid Guid { get; set; }
 
-    [StringLength(100)]
-    public string? FirstName { get; set; }
+    [StringLength(100)] public string? FirstName { get; set; }
 
-    [StringLength(100)]
-    public string? LastName { get; set; }
+    [StringLength(100)] public string? LastName { get; set; }
 
     public Guid? Picture { get; set; }
 
@@ -34,11 +31,9 @@ public partial record Cardholder
 
     public int? ExpirationDuration { get; set; }
 
-    [Column(TypeName = "datetime")]
-    public DateTime? ExpirationDate { get; set; }
+    [Column(TypeName = "datetime")] public DateTime? ExpirationDate { get; set; }
 
-    [Column(TypeName = "datetime")]
-    public DateTime? ActivationDate { get; set; }
+    [Column(TypeName = "datetime")] public DateTime? ActivationDate { get; set; }
 
     public string? Email { get; set; }
 
@@ -56,11 +51,11 @@ public partial record Cardholder
 
     public bool CanEscort { get; set; }
 
-    [Column(TypeName = "datetime")]
-    public DateTime? VisitDate { get; set; }
+    [Column(TypeName = "datetime")] public DateTime? VisitDate { get; set; }
 
-    [StringLength(100)]
-    public string? MobilePhoneNumber { get; set; }
+    [StringLength(100)] public string? MobilePhoneNumber { get; set; }
+
+    [StringLength(10)] public string? UpId { get; set; }
 
     [ForeignKey("Escort2")]
     [InverseProperty("CardholderEscort2Navigations")]

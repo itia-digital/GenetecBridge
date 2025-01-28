@@ -1,5 +1,4 @@
 ﻿using Core.Data;
-using Core.Data.Extensions;
 using Microsoft.EntityFrameworkCore;
 using UP.Data.Context;
 using UP.Data.Models;
@@ -9,35 +8,26 @@ namespace UP.Data.Repositories;
 public interface IActiveProfessorsRepository : IRepository;
 
 public class ActiveProfessorsRepository(UpDbContext context)
-    : Repository<UpDbContext, PsUpRhIdDeptdt>(context: context),
+    : Repository(context: context),
         IActiveProfessorsRepository
 {
-    protected override IQueryable<PsUpRhIdDeptdt> Query()
+    protected override IQueryable<PsUpIdGralTVw> Query()
     {
         string[] payGroup =
             ["UPAA001", "UPGA001", "UPMA001", "UPAH001", "UPGH001", "UPMH001"];
-        return Table.Where(e => e.HrStatus == "A"
-                                && EF.Constant(payGroup).Contains(e.GpPaygroup));
+        return base
+            .Query()
+            .Where(e => e.StatusField == "A"
+                        && EF.Constant(payGroup).Contains(e.GpPaygroup));
     }
 
-    public IAsyncEnumerable<List<UpRecordValue>> FetchAllRecordsInChunksAsync(
-        int limit = 0, int chunkSize = 1000, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<List<UpRecordValue>> FetchAsync(int limit = 0,
+        int chunkSize = 1000, CancellationToken cancellationToken = default)
     {
-        IQueryable<UpRecordValue> query = Query()
-            .SelectMany(t => Context.PsUpIdGralEVws
-                    .Where(e => e.Emplid == t.Emplid)
-                    .DefaultIfEmpty(),
-                (src, md) => new UpRecordValue
-                {
-                    Id = src.Emplid,
-                    Name = md.FirstName,
-                    LastName = md.LastName,
-                    Email = md.Emailid,
-                    GenetecGroup = Constants.GenetecActiveProfessorGroup,
-                    Campus = md.Institution,
-                    Phone = null
-                });
-
-        return query.FetchAllRecordsInChunksAsync(limit, chunkSize, cancellationToken);
+        return base.FetchAsync(
+            Constants.GenetecActiveProfessorGroup,
+            limit,
+            chunkSize,
+            cancellationToken);
     }
 }

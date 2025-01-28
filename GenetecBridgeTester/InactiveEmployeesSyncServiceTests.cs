@@ -7,17 +7,17 @@ using UP.Data.Context;
 
 namespace GenetecBridgeTester;
 
-public class ActiveEmployeesSyncServiceTests
+public class InactiveEmployeesSyncServiceTests
 {
     private readonly GenetecDbContext _context = new();
 
     private readonly ISyncService _service;
     private readonly SyncWorker _sync;
 
-    public ActiveEmployeesSyncServiceTests()
+    public InactiveEmployeesSyncServiceTests()
     {
         _sync = new SyncWorker(_context);
-        _service = new ActiveEmployeesSyncService(_sync,
+        _service = new InactiveEmployeesSyncService(_sync,
             new UpUnitOfWork(new UpDbContext()));
     }
 

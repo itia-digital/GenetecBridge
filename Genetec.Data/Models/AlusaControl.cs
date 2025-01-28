@@ -4,17 +4,19 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Genetec.Data.Models;
 
-[Keyless]
 [Table("AlusaControl")]
-[Index("EntityGuid", Name = "AlusaControlIds_EntityGuid_uindex", IsUnique = true)]
-public partial class AlusaControl
+[Index("Name", "EndedAt", Name = "AlusaControl_Name_EndedAt_index")]
+public partial record AlusaControl
 {
-    public Guid EntityGuid { get; set; }
-
-    [StringLength(10)]
-    [Unicode(false)]
-    public string? UpId { get; set; }
+    [StringLength(50)]
+    public string? Name { get; set; }
 
     [Column(TypeName = "datetime")]
-    public DateTime? UpdatedAt { get; set; }
+    public DateTime? StartedAt { get; set; }
+
+    [Column(TypeName = "datetime")]
+    public DateTime? EndedAt { get; set; }
+
+    [Key]
+    public int Id { get; set; }
 }

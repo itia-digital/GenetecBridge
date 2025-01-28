@@ -4,7 +4,7 @@ using UP.Data;
 
 namespace Genetec.Data;
 
-public class ActiveEmployeesSyncService(SyncWorker worker, IUpUnitOfWork unitOfWork) : ISyncService
+public class ActiveStudentsSyncService(SyncWorker worker, IUpUnitOfWork unitOfWork) : ISyncService
 {
     /// <summary>
     ///     Syncs records and set the same genetec access group
@@ -17,9 +17,9 @@ public class ActiveEmployeesSyncService(SyncWorker worker, IUpUnitOfWork unitOfW
     public async Task SyncAsync(DateTime startedAt, int limit = 0, int chunkSize = 2000,
         CancellationToken cancellationToken = default)
     {
-        IAsyncEnumerable<List<UpRecordValue>> fetchedRecords = unitOfWork.ActiveEmployees
+        IAsyncEnumerable<List<UpRecordValue>> fetchedRecords = unitOfWork.ActiveStudents
             .FetchAsync(limit, chunkSize, cancellationToken);
-        
+
         await foreach (List<UpRecordValue> upItems in fetchedRecords)
             await worker.RunAsync(startedAt, upItems, cancellationToken);
 
@@ -27,7 +27,7 @@ public class ActiveEmployeesSyncService(SyncWorker worker, IUpUnitOfWork unitOfW
         {
             StartedAt = startedAt,
             EndedAt = DateTime.UtcNow,
-            Name = nameof(ActiveEmployeesSyncService)
+            Name = nameof(ActiveStudentsSyncService)
         };
 
         await worker.CreateControlAsync(control, cancellationToken);
