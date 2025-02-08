@@ -1,5 +1,4 @@
 ﻿using Core.Data;
-using Microsoft.EntityFrameworkCore;
 using UP.Data.Context;
 using UP.Data.Models;
 
@@ -13,10 +12,14 @@ public class GraduatedStudentRepository(UpDbContext context)
 {
     protected override IQueryable<PsUpIdGralTVw> Query()
     {
-        string[] status = ["DM-EGR", "CM-CRED", "SP-EGR", "SP-EGRP"];
         return base
             .Query()
-            .Where(e => EF.Constant(status).Contains(e.StatusField));
+            .Where(e =>
+                (e.StatusField == "DM" && e.ProgReason == "EGR")
+                || (e.StatusField == "CM" && e.ProgReason == "CRED")
+                || (e.StatusField == "SP" && e.ProgReason == "EGR")
+                || (e.StatusField == "SP" && e.ProgReason == "EGRP")
+            );
     }
 
     public IAsyncEnumerable<List<UpRecordValue>> FetchAsync(int limit = 0,

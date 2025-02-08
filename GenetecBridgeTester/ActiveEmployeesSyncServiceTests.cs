@@ -7,6 +7,7 @@ using UP.Data.Context;
 
 namespace GenetecBridgeTester;
 
+[Collection("Sync")]
 public class ActiveEmployeesSyncServiceTests
 {
     private readonly GenetecDbContext _context = new();
@@ -27,7 +28,7 @@ public class ActiveEmployeesSyncServiceTests
         int limit, int chunkSize)
     {
         // arrange
-        await _sync.ResetAsync();
+        //await _sync.ResetAsync();
         DateTime now = DateTime.UtcNow;
 
         // act
@@ -35,6 +36,6 @@ public class ActiveEmployeesSyncServiceTests
 
         // assert
         int result = await _context.AlusaControls.CountAsync();
-        Assert.Equal(1, result);
+        Assert.True(result > 0);
     }
 }

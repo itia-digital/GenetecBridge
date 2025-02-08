@@ -56,7 +56,9 @@ public class SyncWorker(GenetecDbContext context)
             {
                 UpId = value.UpId,
                 Email = value.Email,
+                Status = value.Status,
                 LastName = value.LastName,
+                FirstName = value.FirstName,
                 MobilePhoneNumber = value.MobilePhoneNumber,
             },
             cancellationToken);

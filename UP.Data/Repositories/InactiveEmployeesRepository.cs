@@ -16,7 +16,11 @@ public class InactiveEmployeesRepository(UpDbContext context)
 {
     protected override IQueryable<PsUpIdGralTVw> Query()
     {
-        return base.Query().Where(e => e.StatusField == "I");
+        string[] payGroup = ["UPA001", "UPG001", "UPM001"];
+        return base
+            .Query()
+            .Where(e => e.StatusField == "I"
+                        && EF.Constant(payGroup).Contains(e.GpPaygroup));
     }
 
     public IAsyncEnumerable<List<UpRecordValue>> FetchAsync(int limit = 0,

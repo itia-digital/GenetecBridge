@@ -1,4 +1,5 @@
 ﻿using Core.Data;
+using Genetec.Data.Models;
 using UP.Data;
 
 namespace Genetec.Data;
@@ -21,5 +22,14 @@ public class GraduatedSyncService(SyncWorker worker, IUpUnitOfWork unitOfWork) :
 
         await foreach (List<UpRecordValue> upItems in fetchedRecords)
             await worker.RunAsync(startedAt, upItems, cancellationToken);
+
+        AlusaControl control = new()
+        {
+            StartedAt = startedAt,
+            EndedAt = DateTime.UtcNow,
+            Name = nameof(GraduatedSyncService)
+        };
+
+        await worker.CreateControlAsync(control, cancellationToken);
     }
 }
