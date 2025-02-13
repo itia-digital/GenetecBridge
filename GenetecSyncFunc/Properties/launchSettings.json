@@ -2,7 +2,7 @@
   "profiles": {
     "GenetecSyncFunc": {
       "commandName": "Project",
-      "commandLineArgs": "--port 7064",
+      "commandLineArgs": "--port 7059",
       "launchBrowser": false
     }
   }
