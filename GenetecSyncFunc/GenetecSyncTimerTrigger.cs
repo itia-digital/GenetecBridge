@@ -13,10 +13,15 @@ public static class GenetecSyncTimerTrigger
     {
         var now = DateTime.UtcNow;
         log.LogInformation($"Started at: {now}");
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+
+        log.LogInformation("Syncing {date}..", now.Date);
 
         SyncService syncService = new(log);
         await syncService.SyncAsync(now);
-
+        
+        watch.Stop();
+        log.LogInformation("Syncing {date} finished, elapsed time {elapsed} ms..", now.Date, watch.ElapsedMilliseconds);
         log.LogInformation($"Finished at: {DateTime.UtcNow}");
     }
 }

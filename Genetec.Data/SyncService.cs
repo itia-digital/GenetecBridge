@@ -1,7 +1,6 @@
 ﻿using Core.Data;
 using Core.Data.Extensions;
 using Genetec.Data.Context;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using UP.Data;
 using UP.Data.Context;
