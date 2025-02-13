@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace GenetecBridgeTester;
+namespace Core.Data;
 
 public static class Utils
 {

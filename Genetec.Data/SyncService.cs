@@ -10,7 +10,7 @@ namespace Genetec.Data;
 
 public class SyncService
 {
-    private readonly ILogger<SyncService> _logger;
+    private readonly ILogger _logger;
     private readonly SyncWorker _sync = new(new GenetecDbContext());
     private readonly UpDbContext _context = new();
 
@@ -21,7 +21,7 @@ public class SyncService
     private readonly ISyncService _professors;
     private readonly ISyncService _inactiveEmployees;
 
-    public SyncService(ILogger<SyncService> logger)
+    public SyncService(ILogger logger)
     {
         _logger = logger;
         var uow = new UpUnitOfWork(_context);

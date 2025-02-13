@@ -1,4 +1,5 @@
-﻿using Genetec.Data;
+﻿using Core.Data;
+using Genetec.Data;
 
 namespace GenetecBridgeTester;
 
