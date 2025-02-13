@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 using Microsoft.EntityFrameworkCore;
 
 namespace Core.Data.Extensions;
@@ -38,4 +39,9 @@ public static class QueryableExtension
             if (chunk.Count != 0) yield return chunk; // Stream the chunk
         } while (hasMoreData);
     }
+    
+    public static IQueryable<T> ConditionalWhere<T>(
+        this IQueryable<T> source, bool condition,
+        Expression<Func<T, bool>> predicate
+    ) => condition ? source.Where(predicate) : source;
 }

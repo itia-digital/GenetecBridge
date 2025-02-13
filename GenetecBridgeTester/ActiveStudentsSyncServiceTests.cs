@@ -1,3 +1,4 @@
+using Core.Data;
 using Genetec.Data;
 using Genetec.Data.Context;
 using Microsoft.EntityFrameworkCore;
@@ -11,13 +12,12 @@ public class ActiveStudentsSyncServiceTests
 {
     private readonly GenetecDbContext _context = new();
 
-    private readonly ActiveStudentsSyncService _service;
-    private readonly SyncWorker _sync;
+    private readonly ISyncService _service;
 
     public ActiveStudentsSyncServiceTests()
     {
-        _sync = new SyncWorker(_context);
-        _service = new ActiveStudentsSyncService(_sync,
+        SyncWorker sync = new(_context);
+        _service = new ActiveStudentsSyncService(sync,
             new UpUnitOfWork(new UpDbContext()));
     }
 

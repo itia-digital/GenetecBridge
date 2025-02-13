@@ -13,12 +13,11 @@ public class InactiveStudentsSyncServiceTests
     private readonly GenetecDbContext _context = new();
 
     private readonly ISyncService _service;
-    private readonly SyncWorker _sync;
 
     public InactiveStudentsSyncServiceTests()
     {
-        _sync = new SyncWorker(_context);
-        _service = new InactiveStudentsSyncService(_sync,
+        SyncWorker sync = new(_context);
+        _service = new InactiveStudentsSyncService(sync,
             new UpUnitOfWork(new UpDbContext()));
     }
 

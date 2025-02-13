@@ -22,13 +22,15 @@ public class GraduatedStudentRepository(UpDbContext context)
             );
     }
 
-    public IAsyncEnumerable<List<UpRecordValue>> FetchAsync(int limit = 0,
-        int chunkSize = 1000, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<List<UpRecordValue>> FetchAsync(
+        int limit = 0, int chunkSize = 1000, DateTime? date = null,
+        CancellationToken cancellationToken = default)
     {
         return base.FetchAsync(
             Constants.GenetecGraduatedGroup,
             limit,
             chunkSize,
+            date,
             cancellationToken);
     }
 }

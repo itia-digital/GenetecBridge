@@ -19,4 +19,7 @@ public partial record AlusaControl
 
     [Key]
     public int Id { get; set; }
+
+    [Column(TypeName = "datetime")]
+    public DateTime? SyncedDate { get; set; }
 }
