@@ -45,7 +45,7 @@ public abstract class Repository(UpDbContext context)
                 Id = src.Emplid.Trim(),
                 Email = src.Emailid,
                 Name = src.FirstName.Trim(),
-                LastName = src.LastName.Trim(),
+                LastName = $"{src.LastName.Trim()} {src.SecondLastName.Trim()}",
                 Campus = src.Institution.Trim(),
                 GenetecGroup = genetecGroup,
                 PositionOrProgram = src.Descr.Trim(),
