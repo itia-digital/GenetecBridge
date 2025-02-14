@@ -14,11 +14,13 @@ public class SyncService
     private readonly UpDbContext _context = new();
 
     private readonly ISyncService _students;
-    private readonly ISyncService _inactiveStudents;
     private readonly ISyncService _graduated;
     private readonly ISyncService _employees;
     private readonly ISyncService _professors;
+    private readonly ISyncService _inactiveStudents;
     private readonly ISyncService _inactiveEmployees;
+    private readonly InactiveProfessorsSyncService _inactiveProfessors;
+    private readonly RetiredSyncService _retired;
 
     public SyncService(ILogger logger)
     {
@@ -26,11 +28,13 @@ public class SyncService
         var uow = new UpUnitOfWork(_context);
 
         _students = new ActiveStudentsSyncService(_sync, uow);
-        _inactiveStudents = new InactiveStudentsSyncService(_sync, uow);
         _graduated = new GraduatedSyncService(_sync, uow);
         _employees = new ActiveEmployeesSyncService(_sync, uow);
         _professors = new ActiveProfessorsSyncService(_sync, uow);
+        _inactiveStudents = new InactiveStudentsSyncService(_sync, uow);
         _inactiveEmployees = new InactiveEmployeesSyncService(_sync, uow);
+        _inactiveProfessors = new InactiveProfessorsSyncService(_sync, uow);
+        _retired = new RetiredSyncService(_sync, uow);
     }
 
     public async Task ClearAsync()
@@ -38,11 +42,15 @@ public class SyncService
         await _sync.ResetAsync();
     }
 
-    public async Task SyncAllAsync()
+    public async Task SyncAllAsync(DateTime? starterDate = null)
     {
         var datesEnumerator = _context.PsUpIdGralTVws
-            .Where(e => e.Lastupddttm != null)
-            .Select(e => new { e.Lastupddttm!.Value.Date})
+            .ConditionalWhere(
+                starterDate == null,
+                e => e.Lastupddttm != null,
+                e => e.Lastupddttm != null && e.Lastupddttm.Value.Date >= starterDate!.Value.Date
+            )
+            .Select(e => new { e.Lastupddttm!.Value.Date })
             .Distinct()
             .OrderBy(e => e.Date)
             .FetchAsync();
@@ -51,16 +59,7 @@ public class SyncService
         {
             foreach (var d in datesChunk)
             {
-                var watch = System.Diagnostics.Stopwatch.StartNew();
-                _logger.LogInformation("Syncing {date}..", d.Date);
-
                 await SyncAsync(d.Date);
-
-                watch.Stop();
-                _logger.LogInformation(
-                    "Syncing {date} finished, elapsed time {elapsed} ms..",
-                    d.Date,
-                    watch.ElapsedMilliseconds);
             }
         }
     }
@@ -69,13 +68,25 @@ public class SyncService
     {
         const int limit = 20000;
         const int chunkSize = 5000;
+        var d = date.ToString("yyyy-MM-dd");
+
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        _logger.LogInformation("Syncing {date}..", d);
 
         // act
         await _students.SyncAsync(DateTime.UtcNow, limit, chunkSize, date: date);
-        await _inactiveStudents.SyncAsync(DateTime.UtcNow, limit, chunkSize, date: date);
         await _graduated.SyncAsync(DateTime.UtcNow, limit, chunkSize, date: date);
         await _employees.SyncAsync(DateTime.UtcNow, limit, chunkSize, date: date);
         await _professors.SyncAsync(DateTime.UtcNow, limit, chunkSize, date: date);
+        await _inactiveStudents.SyncAsync(DateTime.UtcNow, limit, chunkSize, date: date);
         await _inactiveEmployees.SyncAsync(DateTime.UtcNow, limit, chunkSize, date: date);
+        await _inactiveProfessors.SyncAsync(DateTime.UtcNow, limit, chunkSize, date: date);
+        await _retired.SyncAsync(DateTime.UtcNow, limit, chunkSize, date: date);
+
+        watch.Stop();
+        _logger.LogInformation(
+            "Syncing {date} finished, elapsed time {elapsed} ms..",
+            d, watch.ElapsedMilliseconds
+        );
     }
 }

@@ -39,9 +39,14 @@ public static class QueryableExtension
             if (chunk.Count != 0) yield return chunk; // Stream the chunk
         } while (hasMoreData);
     }
-    
+
     public static IQueryable<T> ConditionalWhere<T>(
         this IQueryable<T> source, bool condition,
-        Expression<Func<T, bool>> predicate
-    ) => condition ? source.Where(predicate) : source;
+        Expression<Func<T, bool>> predicate,
+        Expression<Func<T, bool>>? elsePredicate = null
+    ) => condition
+        ? source.Where(predicate)
+        : elsePredicate != null
+            ? source.Where(elsePredicate)
+            : source;
 }

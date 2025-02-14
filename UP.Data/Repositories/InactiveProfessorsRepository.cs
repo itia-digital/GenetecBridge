@@ -5,17 +5,15 @@ using UP.Data.Models;
 
 namespace UP.Data.Repositories;
 
-/// <summary>
-///     Retired employees
-/// </summary>
-public interface IRetiredRepository : IRepository;
+public interface IInactiveProfessorsRepository : IRepository;
 
-public class RetiredEmployeesRepository(UpDbContext context)
-    : Repository(context: context), IRetiredRepository
+public class InactiveProfessorsRepository(UpDbContext context)
+    : Repository(context: context), IInactiveProfessorsRepository
 {
     protected override IQueryable<PsUpIdGralTVw> Query()
     {
-        string[] payGroup = ["UPAP001", "UPGP001", "UPMP001"];
+        string[] payGroup =
+            ["UPAA001", "UPGA001", "UPMA001", "UPAH001", "UPGH001", "UPMH001"];
         return base
             .Query()
             .Where(e => e.StatusField == "I"
@@ -27,7 +25,7 @@ public class RetiredEmployeesRepository(UpDbContext context)
         CancellationToken cancellationToken = default)
     {
         return base.FetchAsync(
-            Constants.GenetecRetiredGroup,
+            Constants.GenetecProfessorGroup,
             limit,
             chunkSize,
             date,

@@ -4,11 +4,10 @@ using UP.Data.Models;
 
 namespace UP.Data.Repositories;
 
-public interface IGraduatedStudentRepository : IRepository;
+public interface IGraduatedRepository : IRepository;
 
-public class GraduatedStudentRepository(UpDbContext context)
-    : Repository(context: context),
-        IGraduatedStudentRepository
+public class GraduatedRepository(UpDbContext context)
+    : Repository(context: context), IGraduatedRepository
 {
     protected override IQueryable<PsUpIdGralTVw> Query()
     {
