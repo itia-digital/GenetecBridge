@@ -5,18 +5,22 @@ using UP.Data.Models;
 
 namespace UP.Data.Repositories;
 
-public interface IInactiveStudentsRepository : IRepository;
+/// <summary>
+///     Retired employees
+/// </summary>
+public interface IRetiredEmployeesRepository : IRepository;
 
-public class InactiveStudentsRepository(UpDbContext context)
+public class RetiredEmployeesRepository(UpDbContext context)
     : Repository(context: context),
-        IInactiveStudentsRepository
+        IRetiredEmployeesRepository
 {
     protected override IQueryable<PsUpIdGralTVw> Query()
     {
-        string[] statuses = ["CN", "DC", "DE", "LA"];
+        string[] payGroup = ["UPAP001", "UPGP001", "UPMP001"];
         return base
             .Query()
-            .Where(e => EF.Constant(statuses).Contains(e.StatusField));
+            .Where(e => e.StatusField == "I"
+                        && EF.Constant(payGroup).Contains(e.GpPaygroup));
     }
 
     public IAsyncEnumerable<List<UpRecordValue>> FetchAsync(
@@ -24,7 +28,7 @@ public class InactiveStudentsRepository(UpDbContext context)
         CancellationToken cancellationToken = default)
     {
         return base.FetchAsync(
-            Constants.GenetecStudentGroup,
+            Constants.GenetecRetiredEmployeeGroup,
             limit,
             chunkSize,
             date,

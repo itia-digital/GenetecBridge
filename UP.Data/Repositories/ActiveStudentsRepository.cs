@@ -20,7 +20,7 @@ public class ActiveStudentsRepository(UpDbContext context)
         CancellationToken cancellationToken = default)
     {
         return base.FetchAsync(
-            Constants.GenetecActiveStudentGroup,
+            Constants.GenetecStudentGroup,
             limit,
             chunkSize,
             date,

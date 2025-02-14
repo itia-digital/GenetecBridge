@@ -24,7 +24,7 @@ public class ActiveEmployeesRepository(UpDbContext context)
         CancellationToken cancellationToken = default)
     {
         return base.FetchAsync(
-            Constants.GenetecActiveEmployeeGroup,
+            Constants.GenetecEmployeeGroup,
             limit,
             chunkSize,
             date,
