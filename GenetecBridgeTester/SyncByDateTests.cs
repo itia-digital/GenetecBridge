@@ -20,8 +20,9 @@ public class SyncByDateTests
     }
 
     [Theory]
-    [InlineData("2025-02-14")]
+    //[InlineData("2025-02-14")]
     //[InlineData("2025-02-13")]
+    [InlineData("2016-06-06")]
     //[InlineData("2002-05-29")]
     public async Task SyncService_SyncsSuccessfully(
         string date)

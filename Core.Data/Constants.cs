@@ -2,7 +2,8 @@
 
 public static class Constants
 {
-    public static byte GenetecDefaultEntityType = 7;
+    public static byte GenetecCardHolderEntityType = 7;
+    public static byte GenetecCredentialEntityType = 9;
     public static int GenetecDefaultEntityVerion = 23296;
     // staff Entity.Type = 8
     public static Guid GenetecEmployeeGroup = Guid.Parse("ae1c697e-1049-4b86-ad2f-0ba8dfaaf2ee");

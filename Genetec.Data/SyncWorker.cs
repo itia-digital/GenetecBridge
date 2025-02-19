@@ -30,7 +30,7 @@ public class SyncWorker(GenetecDbContext context)
             i => new { i.UpId },
             (_, value) => new Entity
             {
-                Type = Constants.GenetecDefaultEntityType,
+                Type = Constants.GenetecCardHolderEntityType,
                 Version = Constants.GenetecDefaultEntityVerion,
             },
             cancellationToken);

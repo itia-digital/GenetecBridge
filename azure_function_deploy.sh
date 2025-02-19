@@ -6,6 +6,7 @@ FUNCTION_APP_NAME="GenetecSyncFunc"
 STORAGE_ACCOUNT_NAME="updbserversperfdiag333"
 APP_INSIGHTS_NAME="GenetecSyncInsights"
 APP_DIAGNOSTICS_NAME="GenetecSyncDiagnostics"
+APP_SERVICE_PLAN_NAME="GenetecSyncPlan"  # Plan Premium más barato (B2)
 
 # Verificar instalación de herramientas
 echo "🔍 Verificando instalación de herramientas..."
@@ -38,20 +39,33 @@ else
     echo "    ✅ Cuenta de almacenamiento ya existe."
 fi
 
-echo "3️⃣ Obteniendo cadena de conexión del Storage Account..."
+echo "3️⃣ Creando plan de App Service Premium B2 si no existe..."
+EXISTS=$(az appservice plan show --name $APP_SERVICE_PLAN_NAME --resource-group $RESOURCE_GROUP --query name --output tsv 2>/dev/null)
+if [ -z "$EXISTS" ]; then
+    az appservice plan create --name $APP_SERVICE_PLAN_NAME \
+        --resource-group $RESOURCE_GROUP \
+        --location "$LOCATION" \
+        --sku B2 \
+        --is-linux \
+        --only-show-errors
+else
+    echo "    ✅ Plan de App Service Premium B2 ya existe."
+fi
+
+echo "4️⃣ Obteniendo cadena de conexión del Storage Account..."
 STORAGE_CONNECTION_STRING=$(az storage account show-connection-string --name $STORAGE_ACCOUNT_NAME --resource-group $RESOURCE_GROUP --query connectionString --output tsv)
 if [ -z "$STORAGE_CONNECTION_STRING" ]; then
     echo "    ❌ Error: No se pudo obtener la cadena de conexión."
     exit 1
 fi
 
-echo "4️⃣ Creando Azure Function App si no existe..."
+echo "5️⃣ Creando Azure Function App en el plan Premium si no existe..."
 EXISTS=$(az functionapp list --resource-group $RESOURCE_GROUP --query "[?name=='$FUNCTION_APP_NAME'] | length(@)" --output tsv)
 if [ "$EXISTS" -eq 0 ]; then
     az functionapp create --name $FUNCTION_APP_NAME \
         --resource-group $RESOURCE_GROUP \
         --storage-account $STORAGE_ACCOUNT_NAME \
-        --consumption-plan-location $LOCATION \
+        --plan $APP_SERVICE_PLAN_NAME \
         --runtime dotnet \
         --runtime-version 8 \
         --functions-version 4 \
@@ -61,7 +75,7 @@ else
     echo "    ✅ Azure Function App ya existe."
 fi
 
-echo "5️⃣ Configurando variables de entorno en la Function App..."
+echo "6️⃣ Configurando variables de entorno en la Function App..."
 az functionapp config appsettings set --name $FUNCTION_APP_NAME \
     --resource-group $RESOURCE_GROUP \
     --settings "AzureWebJobsStorage=$STORAGE_CONNECTION_STRING" \
@@ -69,7 +83,7 @@ az functionapp config appsettings set --name $FUNCTION_APP_NAME \
                "WEBSITE_RUN_FROM_PACKAGE=1" \
     --only-show-errors
 
-echo "6️⃣ Configurando Application Insights si no existe..."
+echo "7️⃣ Configurando Application Insights si no existe..."
 EXISTS=$(az monitor app-insights component show --app $APP_INSIGHTS_NAME --resource-group $RESOURCE_GROUP --query name --output tsv 2>/dev/null)
 if [ -z "$EXISTS" ]; then
     az monitor app-insights component create --app $APP_INSIGHTS_NAME \
@@ -80,7 +94,7 @@ else
     echo "    ✅ Application Insights ya existe."
 fi
 
-echo "7️⃣ Configurando Application Insights en la Function App..."
+echo "8️⃣ Configurando Application Insights en la Function App..."
 APP_INSIGHTS_KEY=$(az monitor app-insights component show --app $APP_INSIGHTS_NAME --resource-group $RESOURCE_GROUP --query instrumentationKey --output tsv)
 if [ -z "$APP_INSIGHTS_KEY" ]; then
     echo "    ❌ Error: No se pudo obtener la clave de Application Insights."
@@ -96,7 +110,7 @@ az functionapp config appsettings set --name $FUNCTION_APP_NAME \
                "FUNCTIONS_WORKER_RUNTIME=dotnet" \
                "WEBSITE_RUN_FROM_PACKAGE=1"
 
-echo "8️⃣ Configurando diagnóstico de logs..."
+echo "9️⃣ Configurando diagnóstico de logs..."
 az webapp log config --name $FUNCTION_APP_NAME --resource-group $RESOURCE_GROUP --web-server-logging filesystem
 
 EXISTS=$(az monitor log-analytics workspace list --resource-group $RESOURCE_GROUP --query "[?name=='${FUNCTION_APP_NAME}-logs'] | length(@)" --output tsv)
@@ -106,7 +120,7 @@ else
     echo "    ✅ Log Analytics Workspace ya existe."
 fi
 
-echo "9️⃣ Configurando diagnósticos en Log Analytics..."
+echo "🔟 Configurando diagnósticos en Log Analytics..."
 WORKSPACE_ID=$(az monitor log-analytics workspace show --resource-group $RESOURCE_GROUP --workspace-name "${FUNCTION_APP_NAME}-logs" --query id --output tsv)
 az monitor diagnostic-settings create --name $APP_DIAGNOSTICS_NAME \
     --resource $FUNCTION_APP_NAME \
@@ -116,7 +130,7 @@ az monitor diagnostic-settings create --name $APP_DIAGNOSTICS_NAME \
     --workspace "$WORKSPACE_ID" \
     --only-show-errors
 
-echo "🔟 Desplegando Azure Function..."
+echo "1️⃣1️⃣ Desplegando Azure Function..."
 cd GenetecSyncFunc
 func azure functionapp publish $FUNCTION_APP_NAME
 
