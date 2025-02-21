@@ -8,8 +8,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core.Data", "Core.Data\Core
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenetecBridgeTester", "GenetecBridgeTester\GenetecBridgeTester.csproj", "{097801BE-1112-49AD-92F6-EE3DF6B1AB14}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenetecSyncFunc", "GenetecSyncFunc\GenetecSyncFunc.csproj", "{3844EB48-1CFD-4563-BD8D-A9BB705ADCF5}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,9 +30,5 @@ Global
 		{097801BE-1112-49AD-92F6-EE3DF6B1AB14}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{097801BE-1112-49AD-92F6-EE3DF6B1AB14}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{097801BE-1112-49AD-92F6-EE3DF6B1AB14}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3844EB48-1CFD-4563-BD8D-A9BB705ADCF5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3844EB48-1CFD-4563-BD8D-A9BB705ADCF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3844EB48-1CFD-4563-BD8D-A9BB705ADCF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3844EB48-1CFD-4563-BD8D-A9BB705ADCF5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
