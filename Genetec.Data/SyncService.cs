@@ -59,10 +59,6 @@ public class SyncService : IDisposable, IAsyncDisposable
     {
         const int limit = 20000;
         const int chunkSize = 5000;
-        string d = date.ToString("yyyy-MM-dd");
-
-        var watch = System.Diagnostics.Stopwatch.StartNew();
-        _logger.LogInformation("Syncing {Date}..", d);
 
         // act
         await _students.SyncAsync(DateTime.UtcNow, limit, chunkSize, date: date, cancellationToken: stoppingToken);
@@ -73,12 +69,6 @@ public class SyncService : IDisposable, IAsyncDisposable
         await _inactiveEmployees.SyncAsync(DateTime.UtcNow, limit, chunkSize, date: date, cancellationToken: stoppingToken);
         await _inactiveProfessors.SyncAsync(DateTime.UtcNow, limit, chunkSize, date: date, cancellationToken: stoppingToken);
         await _retired.SyncAsync(DateTime.UtcNow, limit, chunkSize, date: date, cancellationToken: stoppingToken);
-
-        watch.Stop();
-        _logger.LogInformation(
-            "Syncing {Date} finished, elapsed time {Elapsed} ms..",
-            d, watch.ElapsedMilliseconds
-        );
     }
 
     public void Dispose()

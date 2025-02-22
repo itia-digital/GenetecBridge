@@ -13,7 +13,7 @@ class Program
         // ✅ Setup Serilog
         string path = AppDomain.CurrentDomain.BaseDirectory;
         Log.Logger = new LoggerConfiguration()
-            .WriteTo.File($"{path}\\GenetecSyn-{DateTime.Now:yyyy-MM-ddTh_mm_ss}.log",
+            .WriteTo.File($"{path}\\_{DateTime.Now:yyyy-MM-ddTh-mm-ss}.log",
                 rollingInterval: RollingInterval.Day) // Logs to file daily
             .CreateLogger();
 
@@ -21,6 +21,7 @@ class Program
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
             builder.AddSerilog();
+            builder.AddConsole();
             builder.SetMinimumLevel(LogLevel.Information); // Set log level
         });
 
@@ -43,7 +44,7 @@ class Program
         //   ✅ By date: as today
         if (args.Length == 0)
         {
-            await worker.SyncAsync(DateTime.Today, true, cancellationTokenSource.Token);
+            await worker.SyncAsync(DateTime.Today, cancellationTokenSource.Token);
         }
         else
         {
@@ -55,7 +56,7 @@ class Program
                     out DateTime parsedDate))
             {
                 logger.LogInformation("Valid date received: {Date}", parsedDate);
-                await worker.SyncAsync(parsedDate, true, cancellationTokenSource.Token);
+                await worker.SyncAsync(parsedDate, cancellationTokenSource.Token);
             }
             else { logger.LogError("Invalid date format! Please use yyyy-MM-dd"); }
         }

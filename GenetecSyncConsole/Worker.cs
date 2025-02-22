@@ -6,14 +6,10 @@ namespace GenetecSyncConsole;
 
 public class Worker(SyncService syncService, ILogger logger) : IDisposable
 {
-    public async Task SyncAsync(DateTime now, bool logInfo, CancellationToken stoppingToken)
+    public async Task SyncAsync(DateTime now, CancellationToken stoppingToken)
     {
-        if (logInfo) { logger.LogInformation("Running at: {Now}", now); }
-
+        string d = now.ToString("yyyy-MM-dd");
         var watch = System.Diagnostics.Stopwatch.StartNew();
-
-        if (logInfo) { logger.LogInformation("Syncing {Date}..", now.Date); }
-
         try
         {
             // await syncService.SyncAllAsync(now.AddDays(-60), stoppingToken);
@@ -28,7 +24,7 @@ public class Worker(SyncService syncService, ILogger logger) : IDisposable
                     "Inner exception occurred while syncing..");
             }
 
-            logger.LogError("Syncing {Date} failed..", now.Date);
+            logger.LogError("Syncing {Date} failed..", d);
         }
         catch (Exception e)
         {
@@ -39,13 +35,13 @@ public class Worker(SyncService syncService, ILogger logger) : IDisposable
                     "Inner exception occurred while syncing..");
             }
 
-            logger.LogError("Syncing {Date} failed..", now.Date);
+            logger.LogError("Syncing {Date} failed..", d);
         }
         finally
         {
             watch.Stop();
             logger.LogInformation("Syncing {Date} finished, elapsed time {Elapsed} ms..",
-                now.Date,
+                d,
                 watch.ElapsedMilliseconds);
             logger.LogInformation("Finished at: {Now}", DateTime.UtcNow);
         }
