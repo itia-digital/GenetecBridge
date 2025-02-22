@@ -14,7 +14,7 @@ public class SyncByDateTests
         await _syncService.ClearAsync();
         
         // act
-        await _syncService.SyncAllAsync();
+        await _syncService.SyncAllAsync(DateTime.Today, CancellationToken.None);
 
         // assert
     }
@@ -23,13 +23,14 @@ public class SyncByDateTests
     //[InlineData("2025-02-14")]
     //[InlineData("2025-02-13")]
     [InlineData("2016-06-06")]
+    [InlineData("2024-06-06")]
     //[InlineData("2002-05-29")]
     public async Task SyncService_SyncsSuccessfully(
         string date)
     {
         // arrange
         // act
-        await _syncService.SyncAsync(DateTime.Parse(date));
+        await _syncService.SyncAsync(DateTime.Parse(date), CancellationToken.None);
 
         // assert;
     }

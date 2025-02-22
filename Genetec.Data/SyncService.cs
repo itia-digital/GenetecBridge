@@ -7,11 +7,11 @@ using UP.Data.Context;
 
 namespace Genetec.Data;
 
-public class SyncService
+public class SyncService : IDisposable, IAsyncDisposable
 {
     private readonly ILogger _logger;
-    private readonly SyncWorker _sync = new(new GenetecDbContext());
     private readonly UpDbContext _context = new();
+    private readonly SyncWorker _sync = new(new GenetecDbContext());
 
     private readonly ISyncService _students;
     private readonly ISyncService _graduated;
@@ -42,51 +42,52 @@ public class SyncService
         await _sync.ResetAsync();
     }
 
-    public async Task SyncAllAsync(DateTime? starterDate = null)
+    public async Task SyncAllAsync(DateTime startDate, CancellationToken stoppingToken = default)
     {
-        var datesEnumerator = _context.PsUpIdGralTVws
-            .ConditionalWhere(
-                starterDate == null,
-                e => e.Lastupddttm != null,
-                e => e.Lastupddttm != null && e.Lastupddttm.Value.Date >= starterDate!.Value.Date
-            )
-            .Select(e => new { e.Lastupddttm!.Value.Date })
-            .Distinct()
-            .OrderBy(e => e.Date)
-            .FetchAsync();
+        DateTime today = DateTime.Today;
+        List<DateTime> dateList = Enumerable.Range(0, (today - startDate).Days + 1)
+            .Select(offset => startDate.AddDays(offset))
+            .ToList();
 
-        await foreach (var datesChunk in datesEnumerator)
+        foreach (var d in dateList)
         {
-            foreach (var d in datesChunk)
-            {
-                await SyncAsync(d.Date);
-            }
+            await SyncAsync(d.Date, stoppingToken);
         }
     }
 
-    public async Task SyncAsync(DateTime date)
+    public async Task SyncAsync(DateTime date, CancellationToken stoppingToken)
     {
         const int limit = 20000;
         const int chunkSize = 5000;
-        var d = date.ToString("yyyy-MM-dd");
+        string d = date.ToString("yyyy-MM-dd");
 
         var watch = System.Diagnostics.Stopwatch.StartNew();
-        _logger.LogInformation("Syncing {date}..", d);
+        _logger.LogInformation("Syncing {Date}..", d);
 
         // act
-        await _students.SyncAsync(DateTime.UtcNow, limit, chunkSize, date: date);
-        await _graduated.SyncAsync(DateTime.UtcNow, limit, chunkSize, date: date);
-        await _employees.SyncAsync(DateTime.UtcNow, limit, chunkSize, date: date);
-        await _professors.SyncAsync(DateTime.UtcNow, limit, chunkSize, date: date);
-        await _inactiveStudents.SyncAsync(DateTime.UtcNow, limit, chunkSize, date: date);
-        await _inactiveEmployees.SyncAsync(DateTime.UtcNow, limit, chunkSize, date: date);
-        await _inactiveProfessors.SyncAsync(DateTime.UtcNow, limit, chunkSize, date: date);
-        await _retired.SyncAsync(DateTime.UtcNow, limit, chunkSize, date: date);
+        await _students.SyncAsync(DateTime.UtcNow, limit, chunkSize, date: date, cancellationToken: stoppingToken);
+        await _graduated.SyncAsync(DateTime.UtcNow, limit, chunkSize, date: date, cancellationToken: stoppingToken);
+        await _employees.SyncAsync(DateTime.UtcNow, limit, chunkSize, date: date, cancellationToken: stoppingToken);
+        await _professors.SyncAsync(DateTime.UtcNow, limit, chunkSize, date: date, cancellationToken: stoppingToken);
+        await _inactiveStudents.SyncAsync(DateTime.UtcNow, limit, chunkSize, date: date, cancellationToken: stoppingToken);
+        await _inactiveEmployees.SyncAsync(DateTime.UtcNow, limit, chunkSize, date: date, cancellationToken: stoppingToken);
+        await _inactiveProfessors.SyncAsync(DateTime.UtcNow, limit, chunkSize, date: date, cancellationToken: stoppingToken);
+        await _retired.SyncAsync(DateTime.UtcNow, limit, chunkSize, date: date, cancellationToken: stoppingToken);
 
         watch.Stop();
         _logger.LogInformation(
-            "Syncing {date} finished, elapsed time {elapsed} ms..",
+            "Syncing {Date} finished, elapsed time {Elapsed} ms..",
             d, watch.ElapsedMilliseconds
         );
+    }
+
+    public void Dispose()
+    {
+        _context.Dispose();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _context.DisposeAsync();
     }
 }
