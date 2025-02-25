@@ -13,8 +13,6 @@ public record CardholderMembership
 
     [Key] public Guid GuidMember { get; set; }
     
-    [StringLength(10)] public string? UpId { get; set; }
-
     [ForeignKey("GuidMember")]
     [InverseProperty("CardholderMemberships")]
     public virtual Entity GuidMemberNavigation { get; set; } = null!;

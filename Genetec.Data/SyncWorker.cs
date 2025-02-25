@@ -106,7 +106,6 @@ public class SyncWorker(GenetecDbContext context)
             {
                 GuidGroup = record.GenetecGroup,
                 GuidMember = dbEntities[record.Id],
-                UpId = record.Id
             })
             .ToList();
 
@@ -124,7 +123,6 @@ public class SyncWorker(GenetecDbContext context)
             i => new { i.GuidMember, i.GuidGroup },
             (_, value) => new CardholderMembership
             {
-                UpId = value.UpId,
                 GuidGroup = value.GuidGroup,
                 GuidMember = value.GuidMember,
             },
