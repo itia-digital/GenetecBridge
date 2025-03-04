@@ -31,7 +31,7 @@ public class SyncWorker(GenetecDbContext context)
             (_, value) => new Entity
             {
                 Type = Constants.GenetecCardHolderEntityType,
-                Version = Constants.GenetecDefaultEntityVerion,
+                Version = Constants.GenetecDefaultEntityVersion,
             },
             cancellationToken);
 
@@ -98,7 +98,7 @@ public class SyncWorker(GenetecDbContext context)
             cancellationToken);
 
 
-        // Membership
+        // Membership - group
         // Unset the membership: applies e.g. active professor to inactive professor group
         List<CardholderMembership> memberships = source
             .Select(g => g.Value.First())
@@ -122,6 +122,35 @@ public class SyncWorker(GenetecDbContext context)
             i => $"{i.GuidMember}-{i.GuidGroup}",
             i => new { i.GuidMember, i.GuidGroup },
             (_, value) => new CardholderMembership
+            {
+                GuidGroup = value.GuidGroup,
+                GuidMember = value.GuidMember,
+            },
+            cancellationToken);
+
+        // Membership - partitions
+        // Unset the membership: applies e.g. active professor to inactive professor group
+        List<PartitionMembership> partitionMemberships = source
+            .Select(g => g.Value.First())
+            .SelectMany(_ => new[]
+                {
+                    Constants.GenetecPartitionDefault
+                    // Constants.GenetecPartitionMixcoac,
+                    // Constants.GenetecPartitionCdUp,
+                    // Constants.GenetecPartitionGdl,
+                    // Constants.GenetecPartitionAgs
+                },
+                (record, partitionId) => new PartitionMembership
+                {
+                    GuidGroup = partitionId,
+                    GuidMember = dbEntities[record.Id],
+                })
+            .ToList();
+
+        await RunAsync(partitionMemberships,
+            i => $"{i.GuidMember}-{i.GuidGroup}",
+            i => new { i.GuidMember, i.GuidGroup },
+            (_, value) => new PartitionMembership
             {
                 GuidGroup = value.GuidGroup,
                 GuidMember = value.GuidMember,

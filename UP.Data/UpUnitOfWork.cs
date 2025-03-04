@@ -14,6 +14,7 @@ public interface IUpUnitOfWork : IDisposable, IAsyncDisposable
     IInactiveProfessorsRepository InactiveProfessors { get; }
     IInactiveStudentsRepository InactiveStudents { get; }
     IRetiredRepository RetiredEmployees { get; }
+    IUtilitiesRepository Utilities { get; }
 }
 
 public class UpUnitOfWork(UpDbContext context) : IUpUnitOfWork
@@ -33,6 +34,8 @@ public class UpUnitOfWork(UpDbContext context) : IUpUnitOfWork
     private IInactiveStudentsRepository? _inactiveStudents;
 
     private IRetiredRepository? _retiredEmployees;
+    
+    private UtilitiesRepository? _utilities;
 
     public void Dispose()
     {
@@ -67,4 +70,7 @@ public class UpUnitOfWork(UpDbContext context) : IUpUnitOfWork
 
     public IRetiredRepository RetiredEmployees =>
         _retiredEmployees ??= new RetiredEmployeesRepository(context);
+
+    public IUtilitiesRepository Utilities =>
+        _utilities ??= new UtilitiesRepository(context);
 }

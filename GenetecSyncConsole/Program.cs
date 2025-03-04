@@ -13,7 +13,7 @@ class Program
         // ✅ Setup Serilog
         string path = AppDomain.CurrentDomain.BaseDirectory;
         Log.Logger = new LoggerConfiguration()
-            .WriteTo.File($"{path}\\_{DateTime.Now:yyyy-MM-dd}.log",  // Logs append daily
+            .WriteTo.File($"{path}\\_{DateTime.Today:yyyy-MM-dd}.log",  // Logs append daily
                 rollingInterval: RollingInterval.Day,  // Rolls over by day
                 retainedFileCountLimit: 7,  // Keep logs for the last 7 days (optional)
                 shared: true)  // Allows multiple processes to write to the log

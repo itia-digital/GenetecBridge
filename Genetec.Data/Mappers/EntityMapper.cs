@@ -12,7 +12,7 @@ public class EntityMapper : IMapper<UpRecordValue, Entity>
             Name = source.FullName,
             Guid = Guid.NewGuid(),
             Type = Constants.GenetecCardHolderEntityType,
-            Version = Constants.GenetecDefaultEntityVerion,
+            Version = Constants.GenetecDefaultEntityVersion,
             CreationTime = DateTime.UtcNow,
             Description = string.Empty,
             SubType = 0,
