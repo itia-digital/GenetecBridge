@@ -30,20 +30,19 @@ public static class Constants
     e002dde0-de2b-4ca0-acfc-ccde29455310    Alumnos
     c9c54c2d-1440-41ac-9a7c-df386c1bb607    Jubilados
      */
-    
+
     public static readonly Guid GenetecPartitionDefault =
         Guid.Parse("00000000-0000-0000-0000-00000000000b");
 
-// TODO: Update partitions IDs when Dierctory
     public static readonly Guid GenetecPartitionCdUp =
-        Guid.Parse("82a7209a-bdf9-439b-8fca-58a34b3cfb6d");
+        Guid.Parse("45751766-ad10-4661-a9e6-d4068cd148d5");
 
     public static readonly Guid GenetecPartitionGdl =
-        Guid.Parse("e89cf644-9544-4ab7-a899-71da632cf76d");
+        Guid.Parse("8ac9a9d6-3fd7-453d-80fa-d239ac3feb2b");
 
     public static readonly Guid GenetecPartitionMixcoac =
-        Guid.Parse("95d4732d-8d66-4194-a062-748aaffed823");
+        Guid.Parse("b8d88f9c-4de1-4ddd-bcd7-ff56e37443ee");
 
     public static readonly Guid GenetecPartitionAgs =
-        Guid.Parse("28236839-65dd-4ad7-8d2b-f33348c798a8");
+        Guid.Parse("2b30852b-c0c0-4717-b76b-d2403a475655");
 }

@@ -134,11 +134,11 @@ public class SyncWorker(GenetecDbContext context)
             .Select(g => g.Value.First())
             .SelectMany(_ => new[]
                 {
-                    Constants.GenetecPartitionDefault
-                    // Constants.GenetecPartitionMixcoac,
-                    // Constants.GenetecPartitionCdUp,
-                    // Constants.GenetecPartitionGdl,
-                    // Constants.GenetecPartitionAgs
+                    Constants.GenetecPartitionDefault,
+                    Constants.GenetecPartitionMixcoac,
+                    Constants.GenetecPartitionCdUp,
+                    Constants.GenetecPartitionGdl,
+                    Constants.GenetecPartitionAgs
                 },
                 (record, partitionId) => new PartitionMembership
                 {
@@ -163,6 +163,9 @@ public class SyncWorker(GenetecDbContext context)
         const string sql = """
                            DELETE
                                 FROM CardholderMembership
+                                WHERE GuidMember IN (SELECT Guid FROM Entity WHERE UPId IS NOT NULL);
+                           DELETE 
+                                FROM PartitionMembership 
                                 WHERE GuidMember IN (SELECT Guid FROM Entity WHERE UPId IS NOT NULL);
                            DELETE FROM CustomFieldValue 
                                   WHERE Guid IN (SELECT Guid FROM Entity WHERE UPId IS NOT NULL);
