@@ -1,9 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace Genetec.Data.Models;
 
 [Table("CustomFieldValue")]
+[Index("UpId", Name = "CustomFieldValue_UpId_index")]
 public record CustomFieldValue
 {
     [Key] public Guid Guid { get; set; }
