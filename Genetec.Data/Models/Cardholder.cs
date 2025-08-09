@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Genetec.Data.Models;
 
 [Table("Cardholder")]
+[Index("UpId", Name = "Cardholder_UpId_index")]
 [Index("ExpirationMode", Name = "IX_CardholderExpirationMode")]
 [Index("FirstName", Name = "IX_CardholderFirstName")]
 [Index("LastName", Name = "IX_CardholderLastName")]
@@ -68,4 +69,12 @@ public record Cardholder
     [ForeignKey("Guid")]
     [InverseProperty("CardholderGu")]
     public virtual Entity Gu { get; set; } = null!;
+
+    [ForeignKey("Picture")]
+    [InverseProperty("CardholderPictureNavigations")]
+    public virtual FileCache? PictureNavigation { get; set; }
+
+    [ForeignKey("Thumbnail")]
+    [InverseProperty("CardholderThumbnailNavigations")]
+    public virtual FileCache? ThumbnailNavigation { get; set; }
 }

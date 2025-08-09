@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Genetec.Data.Models;
 
 [Table("Entity")]
+[Index("UpId", Name = "Entity_UpId_index")]
 [Index("Type", "SubType", "Guid", Name = "IX_EntityType")]
 public record Entity
 {

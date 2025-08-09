@@ -24,7 +24,7 @@ public partial class GenetecDbContext : DbContext
 
     public virtual DbSet<Entity> Entities { get; set; }
 
-    public virtual DbSet<PartitionMembership> PartitionMemberships { get; set; }
+    public virtual DbSet<FileCache> FileCaches { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
@@ -32,6 +32,11 @@ public partial class GenetecDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<AlusaControl>(entity =>
+        {
+            entity.Property(e => e.Id).ValueGeneratedOnAdd();
+        });
+
         modelBuilder.Entity<Cardholder>(entity =>
         {
             entity.HasKey(e => e.Guid).IsClustered(false);
@@ -45,6 +50,10 @@ public partial class GenetecDbContext : DbContext
             entity.HasOne(d => d.Gu).WithOne(p => p.CardholderGu)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Cardholder_Entity");
+
+            entity.HasOne(d => d.PictureNavigation).WithMany(p => p.CardholderPictureNavigations).HasConstraintName("FK_Cardholder_Picture");
+
+            entity.HasOne(d => d.ThumbnailNavigation).WithMany(p => p.CardholderThumbnailNavigations).HasConstraintName("FK_Cardholder_Thumbnail");
         });
 
         modelBuilder.Entity<CardholderMembership>(entity =>
@@ -74,6 +83,15 @@ public partial class GenetecDbContext : DbContext
             entity.Property(e => e.Guid).ValueGeneratedNever();
             entity.Property(e => e.Federated).HasComputedColumnSql("(CONVERT([bit],[Flags]&(8)))", true);
             entity.Property(e => e.HiddenFromUi).HasComputedColumnSql("(CONVERT([bit],[Flags]&(4)))", true);
+        });
+
+        modelBuilder.Entity<FileCache>(entity =>
+        {
+            entity.HasKey(e => e.Guid).IsClustered(false);
+
+            entity.Property(e => e.Guid).ValueGeneratedNever();
+            entity.Property(e => e.Context).HasDefaultValue("None");
+            entity.Property(e => e.Extension).HasDefaultValue("Unknown");
         });
 
         OnModelCreatingPartial(modelBuilder);
