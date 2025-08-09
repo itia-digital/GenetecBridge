@@ -5,10 +5,11 @@ using Genetec.Data.Context;
 using Genetec.Data.Mappers;
 using Genetec.Data.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Genetec.Data;
 
-public class SyncWorker(GenetecDbContext context)
+public class SyncWorker(GenetecDbContext context, ILogger logger)
 {
     private readonly EntityMapper _entityMapper = new();
 
@@ -156,6 +157,12 @@ public class SyncWorker(GenetecDbContext context)
                 GuidMember = value.GuidMember,
             },
             cancellationToken);
+
+        logger.LogInformation("Synced {count} records for {date}:", records.Count, startedAt.ToString("yyyy-MM-dd"));
+        foreach (var record in records)
+        {
+            logger.LogInformation("   {UpId} - {Name}", record.Id, record.FullName);;
+        }
     }
 
     public async Task ResetAsync(CancellationToken cancellationToken = default)

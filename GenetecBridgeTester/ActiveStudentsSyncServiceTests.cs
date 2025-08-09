@@ -16,7 +16,7 @@ public class ActiveStudentsSyncServiceTests
 
     public ActiveStudentsSyncServiceTests()
     {
-        SyncWorker sync = new(_context);
+        SyncWorker sync = new(_context, new TestsLogger());
         _service = new ActiveStudentsSyncService(sync,
             new UpUnitOfWork(new UpDbContext()));
     }

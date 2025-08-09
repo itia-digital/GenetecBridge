@@ -2,6 +2,7 @@ using Core.Data;
 using Genetec.Data;
 using Genetec.Data.Context;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using UP.Data;
 using UP.Data.Context;
 
@@ -16,7 +17,7 @@ public class ActiveEmployeesSyncServiceTests
 
     public ActiveEmployeesSyncServiceTests()
     {
-        SyncWorker sync = new(_context);
+        SyncWorker sync = new(_context, new TestsLogger());
         _service = new ActiveEmployeesSyncService(sync,
             new UpUnitOfWork(new UpDbContext()));
     }
