@@ -8,6 +8,33 @@ public static class QueryableExtension
 {
     /// <summary>
     /// </summary>
+    /// <param name="context"></param>
+    /// <param name="data">Chunk of data to sync</param>
+    /// <param name="distinctFn"></param>
+    /// <param name="matching">Expression to match or create</param>
+    /// <param name="whenMatched">Expression to update values when found (existingValue, newValue) => finaleValue</param>
+    /// <param name="cancellationToken"></param>
+    public static async Task ExecUpsertAsync<TContext, TGenetec>(
+        this TContext context,
+        List<TGenetec> data,
+        Func<TGenetec, string> distinctFn,
+        Expression<Func<TGenetec, object>> matching,
+        Expression<Func<TGenetec, TGenetec, TGenetec>> whenMatched,
+        CancellationToken cancellationToken)
+        where TContext : DbContext
+        where TGenetec : class
+    {
+        var src = data.RemoveDuplicated(distinctFn);
+
+        await context.Set<TGenetec>()
+            .UpsertRange(src)
+            .On(matching)
+            .WhenMatched(whenMatched)
+            .RunAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// </summary>
     /// <param name="query"></param>
     /// <param name="limit">Set zero for no limit</param>
     /// <param name="chunkSize"></param>
@@ -18,7 +45,7 @@ public static class QueryableExtension
         this IQueryable<T> query, int limit = 0, int chunkSize = 1000,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        int offset = 0;
+        var offset = 0;
         bool hasMoreData;
 
         if (limit != 0 && chunkSize > limit)

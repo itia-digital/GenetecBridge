@@ -33,7 +33,7 @@ public abstract class Repository(UpDbContext context)
             AsgmtType = e.AsgmtType
         });
 
-    public IAsyncEnumerable<List<UpRecordValue>> FetchAsync(
+    protected IAsyncEnumerable<List<UpRecordValue>> FetchAsync(
         Guid genetecGroup, int limit = 0, int chunkSize = 1000, DateTime? date = null,
         CancellationToken cancellationToken = default)
     {
