@@ -50,17 +50,44 @@ class Program
         }
         else
         {
-            //   ✅ By date: Try to parse the date
-            if (DateTime.TryParseExact(args[0],
-                    "yyyy-MM-dd",
-                    CultureInfo.InvariantCulture,
-                    DateTimeStyles.None,
-                    out DateTime parsedDate))
+            if (args.First().StartsWith("--since=", StringComparison.OrdinalIgnoreCase))
             {
-                logger.LogInformation("Valid date received: {Date}", parsedDate);
-                await worker.SyncAsync(parsedDate, cancellationTokenSource.Token);
+                //   ✅ Since date: Try to parse the date
+                var sinceDateString = args.First()["--since=".Length..];
+                if (DateTime.TryParseExact(sinceDateString,
+                        "yyyy-MM-dd",
+                        CultureInfo.InvariantCulture,
+                        DateTimeStyles.None,
+                        out var sinceDate))
+                {
+                    logger.LogInformation("Running sync from: {Date} to present", sinceDate);
+                    var dateList = Enumerable.Range(0, (DateTime.Today - sinceDate).Days + 1)
+                        .Select(offset => sinceDate.AddDays(offset))
+                        .ToList();
+
+                    foreach (var d in dateList)
+                    {
+                        logger.LogInformation("Syncing {Date}..", sinceDate);
+                        await worker.SyncAsync(d.Date, cancellationTokenSource.Token);
+                    }
+                }
+                else { logger.LogError("Invalid date form for --since param. Please use yyyy-MM-dd"); }
             }
-            else { logger.LogError("Invalid date format! Please use yyyy-MM-dd"); }
+            else
+            {
+                //   ✅ By date: Try to parse the date
+                if (DateTime.TryParseExact(args[0],
+                        "yyyy-MM-dd",
+                        CultureInfo.InvariantCulture,
+                        DateTimeStyles.None,
+                        out DateTime parsedDate))
+                {
+                    logger.LogInformation("Valid date received: {Date}", parsedDate);
+                    await worker.SyncAsync(parsedDate, cancellationTokenSource.Token);
+                }
+                else { logger.LogError("Invalid date format! Please use yyyy-MM-dd"); }
+                
+            }
         }
         
         // Flush logs
