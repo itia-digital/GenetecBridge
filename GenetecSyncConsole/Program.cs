@@ -1,7 +1,10 @@
 ﻿using System.Globalization;
 using Genetec.Data;
+using Genetec.Data.Context;
 using Microsoft.Extensions.Logging;
 using Serilog;
+using UP.Data;
+using UP.Data.Context;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace GenetecSyncConsole;
@@ -38,7 +41,22 @@ class Program
             eventArgs.Cancel = true; // Prevents immediate termination
         };
 
-        // ✅ Create sync service and worker
+        // ✅ Check for status update flag
+        if (args.Any(a => a.Equals("--update-status", StringComparison.OrdinalIgnoreCase)))
+        {
+            logger.LogInformation("--update-status flag detected. Running status synchronization...");
+            var statusLogger = loggerFactory.CreateLogger<StatusSyncService>();
+            await using var upDb = new UpDbContext();
+            await using var up = new UpUnitOfWork(upDb);
+            await using var genetecDb = new GenetecDbContext();
+            var statusService = new StatusSyncService(up, genetecDb, statusLogger);
+            await statusService.SyncAsync(cancellationTokenSource.Token);
+            // Flush logs
+            await Log.CloseAndFlushAsync();
+            return;
+        }
+
+        // ✅ Create sync service and worker for regular sync
         var service = new SyncService(logger);
         var worker = new Worker(service, logger);
 
