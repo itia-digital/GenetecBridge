@@ -15,11 +15,11 @@ public class StatusSyncService(IUpUnitOfWork up, GenetecDbContext genetec, ILogg
         var worker = new StatusSyncWorker(up, genetec);
 
         // Deactivate all applicable records
-        var totalInactive = await worker.SyncAsync(false, 0, 10000, cancellationToken);
+        var totalInactive = await worker.SyncAsync(false, 0, 5000, cancellationToken);
         logger.LogInformation("Total inactivated records: {TotalInactive}", totalInactive);
 
         // Activate all applicable records
-        var totalActive = await worker.SyncAsync(true, 0, 10000, cancellationToken);
+        var totalActive = await worker.SyncAsync(true, 0, 5000, cancellationToken);
         logger.LogInformation("Total activated records: {TotalIActive}", totalActive);
     }
 }

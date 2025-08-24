@@ -11,9 +11,9 @@ public class StatusSyncWorker(IUpUnitOfWork up, GenetecDbContext genetec)
     /// <summary>
     ///     Syncs all records status (active or inactive).
     /// </summary>
-    /// <param name="active"></param>
+    /// <param name="active">true to set Active, false to set Inactive</param>
     /// <param name="limit">Set zero for no limit</param>
-    /// <param name="chunkSize"></param>
+    /// <param name="chunkSize">Chunk size for fetching UpIds</param>
     /// <param name="cancellationToken"></param>
     public async Task<int> SyncAsync(bool active, int limit = 0, int chunkSize = 10000,
         CancellationToken cancellationToken = default)
@@ -21,27 +21,20 @@ public class StatusSyncWorker(IUpUnitOfWork up, GenetecDbContext genetec)
         var fetchedRecords = up.Status
             .FetchAsync(active, limit, chunkSize, cancellationToken);
 
-        var total = 0;
+        var totalAffected = 0;
         await foreach (var source in fetchedRecords)
         {
-            var cardHolders = await genetec.Cardholders
+            if (source.Count == 0)
+                continue;
+
+            // Set-based update: update Status for all Cardholders whose UpId is in the current chunk
+            totalAffected += await genetec.Cardholders
                 .Where(c => source.Contains(c.UpId!))
-                .Select(c => new Cardholder { Guid = c.Guid })
-                .ToListAsync(cancellationToken);
-
-            await genetec.ExecUpsertAsync(cardHolders,
-                i => $"${i.Guid}",
-                i => new { i.Guid },
-                (_, value) => new Cardholder
-                {
-                    Status = active ? (byte)0 : (byte)1
-                },
-                cancellationToken
-            );
-
-            total += source.Count;
+                .ExecuteUpdateAsync(setters =>
+                    setters.SetProperty(c => c.Status, c => active ? (byte)0 : (byte)1),
+                    cancellationToken);
         }
 
-        return total;
+        return totalAffected;
     }
 }
