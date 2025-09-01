@@ -28,7 +28,7 @@ public class SyncService : IDisposable, IAsyncDisposable
     {
         _logger = logger;
         _uow = new UpUnitOfWork(_upDb);
-        _sync = new SyncWorker(_genetecDb);
+        _sync = new SyncWorker(_genetecDb, logger);
 
         _students = new ActiveStudentsSyncService(_sync, _uow);
         _graduated = new GraduatedSyncService(_sync, _uow);

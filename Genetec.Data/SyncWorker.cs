@@ -1,14 +1,14 @@
-﻿using System.Linq.Expressions;
-using Core.Data;
+﻿using Core.Data;
 using Core.Data.Extensions;
 using Genetec.Data.Context;
 using Genetec.Data.Mappers;
 using Genetec.Data.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Genetec.Data;
 
-public class SyncWorker(GenetecDbContext context)
+public class SyncWorker(GenetecDbContext context, ILogger logger)
 {
     private readonly EntityMapper _entityMapper = new();
 
@@ -25,7 +25,7 @@ public class SyncWorker(GenetecDbContext context)
             .Select(entity => entity with { SyncedAt = startedAt })
             .ToList();
 
-        await RunAsync(entities,
+        await context.ExecUpsertAsync(entities,
             i => $"{i.UpId}",
             i => new { i.UpId },
             (_, value) => new Entity
@@ -49,7 +49,7 @@ public class SyncWorker(GenetecDbContext context)
             .Select(record => new CardHolderMapper(dbEntities[record.Id]).Map(record))
             .ToList();
 
-        await RunAsync(cardHolders,
+        await context.ExecUpsertAsync(cardHolders,
             i => $"${i.Guid}",
             i => new { i.Guid },
             (_, value) => new Cardholder
@@ -85,7 +85,7 @@ public class SyncWorker(GenetecDbContext context)
             })
             .ToList();
 
-        await RunAsync(customFieldValues,
+        await context.ExecUpsertAsync(customFieldValues,
             i => $"{i.Guid}",
             i => new { i.Guid },
             (_, value) => new CustomFieldValue
@@ -118,7 +118,7 @@ public class SyncWorker(GenetecDbContext context)
             .ExecuteDeleteAsync(cancellationToken);
         */
 
-        await RunAsync(memberships,
+        await context.ExecUpsertAsync(memberships,
             i => $"{i.GuidMember}-{i.GuidGroup}",
             i => new { i.GuidMember, i.GuidGroup },
             (_, value) => new CardholderMembership
@@ -147,7 +147,7 @@ public class SyncWorker(GenetecDbContext context)
                 })
             .ToList();
 
-        await RunAsync(partitionMemberships,
+        await context.ExecUpsertAsync(partitionMemberships,
             i => $"{i.GuidMember}-{i.GuidGroup}",
             i => new { i.GuidMember, i.GuidGroup },
             (_, value) => new PartitionMembership
@@ -156,6 +156,12 @@ public class SyncWorker(GenetecDbContext context)
                 GuidMember = value.GuidMember,
             },
             cancellationToken);
+
+        logger.LogInformation("Synced {count} records for {date}:", records.Count, startedAt.ToString("yyyy-MM-dd"));
+        foreach (var record in records)
+        {
+            logger.LogInformation("   {UpId} - {Name}", record.Id, record.FullName);;
+        }
     }
 
     public async Task ResetAsync(CancellationToken cancellationToken = default)
@@ -182,28 +188,5 @@ public class SyncWorker(GenetecDbContext context)
     {
         await context.AlusaControls.AddAsync(control, cancellationToken);
         await context.SaveChangesAsync(cancellationToken);
-    }
-
-    /// <summary>
-    /// </summary>
-    /// <param name="data">Chunk of data to sync</param>
-    /// <param name="distinctFn"></param>
-    /// <param name="matching">Expression to match or create</param>
-    /// <param name="whenMatched">Expression to update values when found (existingValue, newValue) => finaleValue</param>
-    /// <param name="cancellationToken"></param>
-    private async Task RunAsync<TGenetec>(
-        List<TGenetec> data,
-        Func<TGenetec, string> distinctFn,
-        Expression<Func<TGenetec, object>> matching,
-        Expression<Func<TGenetec, TGenetec, TGenetec>> whenMatched,
-        CancellationToken cancellationToken)
-        where TGenetec : class
-    {
-        IEnumerable<TGenetec> src = data.RemoveDuplicated(distinctFn);
-        await context.Set<TGenetec>()
-            .UpsertRange(src)
-            .On(matching)
-            .WhenMatched(whenMatched)
-            .RunAsync(cancellationToken);
     }
 }
