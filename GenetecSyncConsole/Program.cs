@@ -46,8 +46,8 @@ class Program
         {
             logger.LogInformation("--update-status flag detected. Running status synchronization...");
             var statusLogger = loggerFactory.CreateLogger<StatusSyncService>();
-            await using var upDb = new UpDbContext();
-            await using var up = new UpUnitOfWork(upDb);
+            await using var upDb = new AppDbContext();
+            await using var up = new SourceUnitOfWork(upDb);
             await using var genetecDb = new GenetecDbContext();
             var statusService = new StatusSyncService(up, genetecDb, statusLogger);
             await statusService.SyncAsync(cancellationTokenSource.Token);

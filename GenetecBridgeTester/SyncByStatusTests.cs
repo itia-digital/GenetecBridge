@@ -9,7 +9,7 @@ namespace GenetecBridgeTester;
 public class SyncByStatusTests
 {
     private readonly StatusSyncService _syncService = new(
-        new UpUnitOfWork(new UpDbContext()),
+        new SourceUnitOfWork(new AppDbContext()),
         new GenetecDbContext(),
         Utils.GetLogger<StatusSyncService>()
     );

@@ -1,12 +1,11 @@
 ﻿using Core.Data;
+using Core.Data.Repositories;
 using UP.Data.Context;
 using UP.Data.Models;
 
 namespace UP.Data.Repositories;
 
-public interface IGraduatedRepository : IRepository;
-
-public class GraduatedRepository(UpDbContext context)
+public class GraduatedRepository(AppDbContext context)
     : Repository(context: context), IGraduatedRepository
 {
     protected override IQueryable<PsUpIdGralTVw> Query()

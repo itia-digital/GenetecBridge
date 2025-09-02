@@ -1,12 +1,11 @@
 ﻿using Core.Data;
+using Core.Data.Repositories;
 using UP.Data.Context;
 using UP.Data.Models;
 
 namespace UP.Data.Repositories;
 
-public interface IActiveStudentsRepository : IRepository;
-
-public class ActiveStudentsRepository(UpDbContext context)
+public class ActiveStudentsRepository(AppDbContext context)
     : Repository(context: context),
         IActiveStudentsRepository
 {

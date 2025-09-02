@@ -1,13 +1,12 @@
 ﻿using Core.Data;
+using Core.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 using UP.Data.Context;
 using UP.Data.Models;
 
 namespace UP.Data.Repositories;
 
-public interface IActiveEmployeesRepository : IRepository;
-
-public class ActiveEmployeesRepository(UpDbContext context)
+public class ActiveEmployeesRepository(AppDbContext context)
     : Repository(context: context), IActiveEmployeesRepository
 {
     protected override IQueryable<PsUpIdGralTVw> Query()

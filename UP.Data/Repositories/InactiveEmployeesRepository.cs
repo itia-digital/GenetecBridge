@@ -1,13 +1,12 @@
 ﻿using Core.Data;
+using Core.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 using UP.Data.Context;
 using UP.Data.Models;
 
 namespace UP.Data.Repositories;
 
-public interface IInactiveEmployeesRepository : IRepository;
-
-public class InactiveEmployeesRepository(UpDbContext context)
+public class InactiveEmployeesRepository(AppDbContext context)
     : Repository(context: context), IInactiveEmployeesRepository
 {
     protected override IQueryable<PsUpIdGralTVw> Query()

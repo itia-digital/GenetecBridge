@@ -1,15 +1,11 @@
 ﻿using Core.Data.Extensions;
+using Core.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 using UP.Data.Context;
 
 namespace UP.Data.Repositories;
 
-public interface IUtilitiesRepository
-{
-    Task<List<string>> GetActiveRecordsAsync(DateTime? updatedAt = null, CancellationToken cancellationToken = default);
-}
-
-public class UtilitiesRepository(UpDbContext context) : IUtilitiesRepository
+public class UtilitiesRepository(AppDbContext context) : IUtilitiesRepository
 {
     public async Task<List<string>> GetActiveRecordsAsync(DateTime? updatedAt = null, CancellationToken cancellationToken = default)
     {

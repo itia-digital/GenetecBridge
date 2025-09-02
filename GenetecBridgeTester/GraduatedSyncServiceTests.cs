@@ -18,7 +18,7 @@ public class GraduatedSyncServiceTests
     {
         SyncWorker sync = new(_context, new TestsLogger());
         _service = new GraduatedSyncService(sync,
-            new UpUnitOfWork(new UpDbContext()));
+            new SourceUnitOfWork(new AppDbContext()));
     }
 
     [Theory]

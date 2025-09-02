@@ -18,7 +18,7 @@ public class InactiveEmployeesSyncServiceTests
     {
         SyncWorker sync = new(_context, new TestsLogger());
         _service = new InactiveEmployeesSyncService(sync,
-            new UpUnitOfWork(new UpDbContext()));
+            new SourceUnitOfWork(new AppDbContext()));
     }
 
     [Theory]

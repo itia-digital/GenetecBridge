@@ -1,11 +1,12 @@
-﻿using UP.Data.Context;
+﻿using Core.Data.Repositories;
+using UP.Data.Context;
 using UP.Data.Repositories;
 
 namespace GenetecBridgeTester;
 
-public class UpDbContextTests
+public class AppDbContextTests
 {
-    private readonly IUtilitiesRepository _utilitiesRepository = new UtilitiesRepository(new UpDbContext());
+    private readonly IUtilitiesRepository _utilitiesRepository = new UtilitiesRepository(new AppDbContext());
     
     [Fact]
     public async Task GetActiveRecordsAsync_FetchesAllActiveRecords()

@@ -1,35 +1,29 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using UP.Data.Models;
 
-namespace UP.Data.Context;
+namespace AnthologySap.Models;
 
-public partial class UpDbContext : DbContext
+public partial class AppDbContext : DbContext
 {
-    public UpDbContext()
+    public AppDbContext()
     {
     }
 
-    public UpDbContext(DbContextOptions<UpDbContext> options)
+    public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)
     {
     }
 
-    public virtual DbSet<PsUpIdGralTVw> PsUpIdGralTVws { get; set; }
+    public virtual DbSet<VUsuariosUnificado> VUsuariosUnificados { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=10.80.0.4;Database=SAPRO;TrustServerCertificate=True;User ID=ControlAccesos;Password=C0n7r0lA<<esos", 
-            sqlOptions => sqlOptions.CommandTimeout(60))
-            .LogTo(Console.WriteLine, LogLevel.Information);
+        => optionsBuilder.UseSqlServer("Server=172.25.3.64;Database=AnthologySync;TrustServerCertificate=True;Integrated Security=True;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.HasDefaultSchema("ACADEMIC\\dproveedoralusa");
-
-        modelBuilder.Entity<PsUpIdGralTVw>(entity =>
+        modelBuilder.Entity<VUsuariosUnificado>(entity =>
         {
-            entity.ToView("PS_UP_ID_GRAL_T_VW", "dbo");
+            entity.ToView("v_UsuariosUnificados");
         });
 
         OnModelCreatingPartial(modelBuilder);

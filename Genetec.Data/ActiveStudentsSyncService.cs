@@ -1,9 +1,8 @@
 ﻿using Core.Data;
-using UP.Data;
 
 namespace Genetec.Data;
 
-public class ActiveStudentsSyncService(SyncWorker worker, IUpUnitOfWork unitOfWork)
+public class ActiveStudentsSyncService(SyncWorker worker, ISourceUnitOfWork unitOfWork)
     : SyncServiceWorker(worker), ISyncService
 {
     /// <summary>
