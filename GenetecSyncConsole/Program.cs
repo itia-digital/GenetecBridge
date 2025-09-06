@@ -3,6 +3,11 @@ using Genetec.Data;
 using Genetec.Data.Context;
 using Microsoft.Extensions.Logging;
 using Serilog;
+using Amazon;
+using Amazon.Runtime;
+using Amazon.CloudWatchLogs;
+using Serilog.Formatting.Compact;
+using Serilog.Sinks.AwsCloudWatch;
 using UP.Data;
 using UP.Data.Context;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
@@ -13,25 +18,62 @@ class Program
 {
     static async Task Main(string[] args)
     {
-        // ✅ Setup Serilog
-        string path = AppDomain.CurrentDomain.BaseDirectory;
-        Log.Logger = new LoggerConfiguration()
-            .WriteTo.File($"{path}\\_{DateTime.Today:yyyy-MM-dd}.log",  // Logs append daily
-                rollingInterval: RollingInterval.Day,  // Rolls over by day
-                retainedFileCountLimit: 7,  // Keep logs for the last 7 days (optional)
-                shared: true)  // Allows multiple processes to write to the log
-            .CreateLogger();
+        // ✅ Set up Serilog with AWS CloudWatch
+        // Read AWS config from environment variables
+        var awsRegion = Environment.GetEnvironmentVariable("AWS_REGION") ?? Environment.GetEnvironmentVariable("AWS_DEFAULT_REGION");
+        const string logGroup = "alusa/genetec-bridge";
+        const string logStreamPrefix = "up";
 
-        // ✅ Create a Logger Factory
+        if (string.IsNullOrWhiteSpace(awsRegion))
+        {
+            await Console.Error.WriteLineAsync("AWS_REGION (or AWS_DEFAULT_REGION) environment variable is not set. Falling back to console logging only.");
+        }
+
+        var loggerConfig = new LoggerConfiguration()
+            .MinimumLevel.Information()
+            .Enrich.FromLogContext();
+
+        if (!string.IsNullOrWhiteSpace(awsRegion))
+        {
+            var regionEndpoint = RegionEndpoint.GetBySystemName(awsRegion);
+            var creds = new EnvironmentVariablesAWSCredentials();
+
+            var cloudWatchClient = new AmazonCloudWatchLogsClient(creds, regionEndpoint);
+            var streamName = $"{logStreamPrefix}-{Environment.MachineName}-{DateTime.UtcNow:yyyyMMdd}";
+            var cloudWatchOptions = new CloudWatchSinkOptions
+            {
+                LogGroupName = logGroup,
+                TextFormatter = new CompactJsonFormatter(),
+                LogStreamNameProvider = new StaticLogStreamProvider(streamName),
+                Period = TimeSpan.FromSeconds(5),
+                BatchSizeLimit = 100,
+                QueueSizeLimit = 10000,
+                CreateLogGroup = true
+            };
+
+            loggerConfig = loggerConfig.WriteTo.AmazonCloudWatch(cloudWatchOptions, cloudWatchClient);
+        }
+
+        // Create the Serilog pipeline (sinks configured above, e.g., AWS CloudWatch)
+        Log.Logger = loggerConfig.CreateLogger();
+
+        // Create a Microsoft LoggerFactory that uses two providers:
+        // 1) Serilog provider -> forwards Microsoft logs to the Serilog pipeline (CloudWatch)
+        // 2) Console provider -> writes to the console directly
+        // So ILogger below is a composite that fan-outs to both CloudWatch (via Serilog) and Console.
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddSerilog();
-            builder.AddConsole();
-            builder.SetMinimumLevel(LogLevel.Information); // Set log level
+            builder.ClearProviders();
+            builder.AddConsole(); // also log to console via MS provider
+            builder.AddSerilog(Log.Logger, dispose: true); // forward to Serilog sinks (CloudWatch)
+            builder.SetMinimumLevel(LogLevel.Information); // Set the log level
         });
 
         // ✅ Create Logger
         ILogger logger = loggerFactory.CreateLogger<Program>();
+        // Emit a startup log via both pipelines for diagnostics
+        logger.LogInformation("GenetecSyncConsole starting at {UtcNow}", DateTime.UtcNow);
+        Serilog.Log.Information("[Serilog] GenetecSyncConsole starting at {UtcNow}", DateTime.UtcNow);
 
         var cancellationTokenSource = new CancellationTokenSource();
         Console.CancelKeyPress += (_, eventArgs) =>
@@ -64,6 +106,7 @@ class Program
         //   ✅ By date: as today
         if (args.Length == 0)
         {
+            logger.LogInformation("Running status synchronization for {Date}...", DateTime.Today.ToShortDateString());
             await worker.SyncAsync(DateTime.Today, cancellationTokenSource.Token);
         }
         else
@@ -110,5 +153,15 @@ class Program
         
         // Flush logs
         await Log.CloseAndFlushAsync();
+    }
+}
+
+internal sealed class StaticLogStreamProvider(string name) : ILogStreamNameProvider
+{
+    private readonly string _name = name ?? throw new ArgumentNullException(nameof(name));
+
+    public string GetLogStreamName()
+    {
+        return _name;
     }
 }
