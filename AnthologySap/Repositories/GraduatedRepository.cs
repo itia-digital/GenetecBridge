@@ -1,6 +1,7 @@
 ﻿using AnthologySap.Models;
 using Core.Data;
 using Core.Data.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace AnthologySap.Repositories;
 
@@ -9,14 +10,17 @@ public class GraduatedRepository(AppDbContext context)
 {
     protected override IQueryable<VUsuariosUnificado> Query()
     {
-        return base
-            .Query()
+        string[] statusField = ["GRAD", "COMPLETE"];
+        string[] progStatus = ["Titulado", "Egresado"];
+        string[] type = ["Doctorado", "Especialidad", "Licenciatura", "Maestria", "Preparatoria"];
+        
+        return base.Query()
             .Where(e =>
-                (e.StatusField == "DM" && e.ProgStatus == "Egresado")
-                || (e.StatusField == "CM" && e.ProgStatus == "CRED")
-                || (e.StatusField == "SP" && e.ProgStatus == "Egresado")
-                || (e.StatusField == "SP" && e.ProgStatus == "EGRP")
+                EF.Constant(type).Contains(e.AsgmtType)
+                && EF.Constant(progStatus).Contains(e.ProgStatus)
+                && EF.Constant(statusField).Contains(e.StatusField)
             );
+
     }
 
     public IAsyncEnumerable<List<UpRecordValue>> FetchAsync(

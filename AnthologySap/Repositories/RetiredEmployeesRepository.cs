@@ -13,8 +13,12 @@ public class RetiredEmployeesRepository(AppDbContext context)
         string[] payGroup = ["UPAP001", "UPGP001", "UPMP001"];
         return base
             .Query()
-            .Where(e => e.StatusField == "I"
-                        && EF.Constant(payGroup).Contains(e.GpPaygroup));
+            .Where(e =>
+                e.StatusField == "I"
+                && e.ProgStatus == "Inactivo"
+                && e.AsgmtType == "Jubilado"
+                && EF.Constant(payGroup).Contains(e.GpPaygroup)
+            );
     }
 
     public IAsyncEnumerable<List<UpRecordValue>> FetchAsync(

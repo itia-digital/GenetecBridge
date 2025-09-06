@@ -1,6 +1,7 @@
 ﻿using AnthologySap.Models;
 using Core.Data;
 using Core.Data.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace AnthologySap.Repositories;
 
@@ -10,11 +11,17 @@ public class ActiveStudentsRepository(AppDbContext context)
 {
     protected override IQueryable<VUsuariosUnificado> Query()
     {
-        return base.Query().Where(e => e.StatusField == "AC");
+        string[] type = ["Doctorado", "Especialidad", "Licenciatura", "Maestria", "Preparatoria"];
+        return base.Query()
+            .Where(e =>
+                e.StatusField == "ATT"
+                && e.ProgStatus == "Activo"
+                && EF.Constant(type).Contains(e.AsgmtType)
+            );
     }
 
     public IAsyncEnumerable<List<UpRecordValue>> FetchAsync(
-        int limit = 0, int chunkSize = 1000, DateTime? date = null, 
+        int limit = 0, int chunkSize = 1000, DateTime? date = null,
         CancellationToken cancellationToken = default)
     {
         return base.FetchAsync(
