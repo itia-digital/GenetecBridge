@@ -7,10 +7,12 @@ namespace AnthologySap.Repositories;
 
 public abstract class Repository(AppDbContext context)
 {
-    protected virtual IQueryable<VUsuariosUnificado> Query() => context.VUsuariosUnificados.Select(
-        e => new VUsuariosUnificado
+    protected virtual IQueryable<VUsuariosUnificado> Query() => context.VUsuariosUnificados.Select(e =>
+        new VUsuariosUnificado
         {
-            Emplid = e.Emplid,
+            Emplid = e.Emplid.Length > 7
+                ? e.Emplid.Substring(e.Emplid.Length - 7, 7)
+                : e.Emplid,
             FirstName = e.FirstName,
             LastName = e.LastName,
             SecondLastName = e.SecondLastName,
@@ -24,7 +26,8 @@ public abstract class Repository(AppDbContext context)
             ProgStatus = e.ProgStatus,
             Lastupddttm = e.Lastupddttm,
             AsgmtType = e.AsgmtType
-        });
+        }
+    );
 
     protected IAsyncEnumerable<List<UpRecordValue>> FetchAsync(
         Guid genetecGroup, int limit = 0, int chunkSize = 1000, DateTime? date = null,
