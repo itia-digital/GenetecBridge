@@ -10,7 +10,6 @@ public class InactiveProfessorsRepository(AppDbContext context)
 {
     protected override IQueryable<VUsuariosUnificado> Query()
     {
-        string[] type = ["Planta", "Honorarios"];
         string[] payGroup =
             ["UPAA001", "UPGA001", "UPMA001", "UPAH001", "UPGH001", "UPMH001"];
         
@@ -19,7 +18,7 @@ public class InactiveProfessorsRepository(AppDbContext context)
             .Where(e =>
                 e.StatusField == "I"
                 && e.ProgStatus == "Inactivo"
-                && EF.Constant(type).Contains(e.AsgmtType)
+                && e.AsgmtType == "Profesor"
                 && EF.Constant(payGroup).Contains(e.GpPaygroup)
             );
     }

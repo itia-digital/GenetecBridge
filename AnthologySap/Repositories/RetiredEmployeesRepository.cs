@@ -14,8 +14,8 @@ public class RetiredEmployeesRepository(AppDbContext context)
         return base
             .Query()
             .Where(e =>
-                e.StatusField == "I"
-                && e.ProgStatus == "Inactivo"
+                e.StatusField == "A"
+                && e.ProgStatus == "Activo"
                 && e.AsgmtType == "Jubilado"
                 && EF.Constant(payGroup).Contains(e.GpPaygroup)
             );
