@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace AnthologySap.Models;
 
@@ -16,15 +17,16 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<VUsuariosUnificado> VUsuariosUnificados { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=172.25.3.64;Database=AnthologySync;TrustServerCertificate=True;Integrated Security=True;");
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https: //go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer(
+                "Server=172.25.3.64;Database=AnthologySync;TrustServerCertificate=True;Integrated Security=True;",
+                sqlOptions => sqlOptions.CommandTimeout(60))
+            .LogTo(Console.WriteLine, LogLevel.Information
+            );
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<VUsuariosUnificado>(entity =>
-        {
-            entity.ToView("v_UsuariosUnificados");
-        });
+        modelBuilder.Entity<VUsuariosUnificado>(entity => { entity.ToView("v_UsuariosUnificados"); });
 
         OnModelCreatingPartial(modelBuilder);
     }
