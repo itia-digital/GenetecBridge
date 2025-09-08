@@ -13,7 +13,7 @@ public class StatusRepository(AppDbContext context) : IStatusRepository
         .OrderBy(e => e)
     ;
 
-    private static readonly string[] InActiveStatuses = ["CN", "DC", "DE", "LA", "I"];
+    private static readonly string[] InActiveStatuses = ["I", "DROP"];
 
     private IQueryable<string> GetInactiveRecordsIds() => context.VUsuariosUnificados
         .Where(e => InActiveStatuses.Contains(e.StatusField) && !string.IsNullOrEmpty(e.Emplid))
