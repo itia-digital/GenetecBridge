@@ -1,6 +1,6 @@
-﻿using Core.Data.Repositories;
-using UP.Data.Context;
-using UP.Data.Repositories;
+﻿using AnthologySap.Models;
+using AnthologySap.Repositories;
+using Core.Data.Repositories;
 
 namespace GenetecBridgeTester;
 

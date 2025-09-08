@@ -1,9 +1,9 @@
+using AnthologySap;
+using AnthologySap.Models;
 using Core.Data;
 using Genetec.Data;
 using Genetec.Data.Context;
 using Microsoft.EntityFrameworkCore;
-using UP.Data;
-using UP.Data.Context;
 
 namespace GenetecBridgeTester;
 

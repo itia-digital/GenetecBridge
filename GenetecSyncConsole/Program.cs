@@ -6,10 +6,10 @@ using Serilog;
 using Amazon;
 using Amazon.Runtime;
 using Amazon.CloudWatchLogs;
+using AnthologySap;
+using AnthologySap.Models;
 using Serilog.Formatting.Compact;
 using Serilog.Sinks.AwsCloudWatch;
-using UP.Data;
-using UP.Data.Context;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace GenetecSyncConsole;

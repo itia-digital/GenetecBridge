@@ -1,9 +1,9 @@
-﻿using Core.Data;
+﻿using AnthologySap;
+using AnthologySap.Models;
+using Core.Data;
 using Genetec.Data.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using UP.Data;
-using UP.Data.Context;
 
 namespace Genetec.Data;
 
