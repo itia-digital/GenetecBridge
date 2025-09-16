@@ -10,17 +10,15 @@ public class GraduatedRepository(AppDbContext context)
 {
     protected override IQueryable<VUsuariosUnificado> Query()
     {
-        string[] statusField = ["GRAD", "COMPLETE"];
-        string[] progStatus = ["Titulado", "Egresado"];
         string[] type = ["Doctorado", "Especialidad", "Licenciatura", "Maestria", "Preparatoria"];
-        
         return base.Query()
             .Where(e =>
-                EF.Constant(type).Contains(e.AsgmtType)
-                && EF.Constant(progStatus).Contains(e.ProgStatus)
-                && EF.Constant(statusField).Contains(e.StatusField)
+                (
+                    e.ProgStatus == "Titulado" && e.StatusField == "GRAD"
+                    || e.ProgStatus == "Egresado" && e.StatusField == "COMPLETE"
+                )
+                && EF.Constant(type).Contains(e.AsgmtType)
             );
-
     }
 
     public IAsyncEnumerable<List<UpRecordValue>> FetchAsync(

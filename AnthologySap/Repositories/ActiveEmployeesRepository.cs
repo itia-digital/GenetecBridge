@@ -10,14 +10,12 @@ public class ActiveEmployeesRepository(AppDbContext context)
 {
     protected override IQueryable<VUsuariosUnificado> Query()
     {
-        string[] payGroup = ["UPA001", "UPC001", "UPE001", "UPG001", "UPM001"];
         return base
             .Query()
             .Where(e =>
                 e.StatusField == "A"
                 && e.ProgStatus == "Activo"
                 && e.AsgmtType == "Empleado"
-                && EF.Constant(payGroup).Contains(e.GpPaygroup)
             );
     }
 

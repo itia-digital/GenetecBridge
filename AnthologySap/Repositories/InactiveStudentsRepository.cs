@@ -14,8 +14,10 @@ public class InactiveStudentsRepository(AppDbContext context)
         string[] type = ["Doctorado", "Especialidad", "Licenciatura", "Maestria", "Preparatoria"];
         return base.Query()
             .Where(e =>
-                e.StatusField == "DROP"
-                && e.ProgStatus == "Inactivo"
+                (
+                    e.ProgStatus == "Inactivo" && e.StatusField == "DROP"
+                    || e.ProgStatus == "Baja" && e.StatusField == "NDSBAJ"
+                )
                 && EF.Constant(type).Contains(e.AsgmtType)
             );
     }

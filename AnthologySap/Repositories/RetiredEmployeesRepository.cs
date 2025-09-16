@@ -10,14 +10,12 @@ public class RetiredEmployeesRepository(AppDbContext context)
 {
     protected override IQueryable<VUsuariosUnificado> Query()
     {
-        string[] payGroup = ["UPAP001", "UPGP001", "UPMP001"];
         return base
             .Query()
             .Where(e =>
                 e.StatusField == "A"
                 && e.ProgStatus == "Activo"
                 && e.AsgmtType == "Jubilado"
-                && EF.Constant(payGroup).Contains(e.GpPaygroup)
             );
     }
 

@@ -14,8 +14,10 @@ public class ActiveStudentsRepository(AppDbContext context)
         string[] type = ["Doctorado", "Especialidad", "Licenciatura", "Maestria", "Preparatoria"];
         return base.Query()
             .Where(e =>
-                e.StatusField == "ATT"
-                && e.ProgStatus == "Activo"
+                (
+                    e.ProgStatus == "Activo" && e.StatusField == "ATT"
+                    || e.ProgStatus == "Matriculado" && e.StatusField == "FUT"
+                )
                 && EF.Constant(type).Contains(e.AsgmtType)
             );
     }
