@@ -18,62 +18,18 @@ class Program
 {
     static async Task Main(string[] args)
     {
-        // ✅ Set up Serilog with AWS CloudWatch
-        // Read AWS config from environment variables
-        var awsRegion = Environment.GetEnvironmentVariable("AWS_REGION") ?? Environment.GetEnvironmentVariable("AWS_DEFAULT_REGION");
-        const string logGroup = "alusa/genetec-bridge";
-        const string logStreamPrefix = "up";
+         await RunAsync(args);
+    }
 
-        if (string.IsNullOrWhiteSpace(awsRegion))
-        {
-            await Console.Error.WriteLineAsync("AWS_REGION (or AWS_DEFAULT_REGION) environment variable is not set. Falling back to console logging only.");
-        }
-
-        var loggerConfig = new LoggerConfiguration()
-            .MinimumLevel.Information()
-            .Enrich.FromLogContext();
-
-        if (!string.IsNullOrWhiteSpace(awsRegion))
-        {
-            var regionEndpoint = RegionEndpoint.GetBySystemName(awsRegion);
-            var creds = new EnvironmentVariablesAWSCredentials();
-
-            var cloudWatchClient = new AmazonCloudWatchLogsClient(creds, regionEndpoint);
-            var streamName = $"{logStreamPrefix}-{Environment.MachineName}-{DateTime.UtcNow:yyyyMMdd}";
-            var cloudWatchOptions = new CloudWatchSinkOptions
-            {
-                LogGroupName = logGroup,
-                TextFormatter = new CompactJsonFormatter(),
-                LogStreamNameProvider = new StaticLogStreamProvider(streamName),
-                Period = TimeSpan.FromSeconds(5),
-                BatchSizeLimit = 100,
-                QueueSizeLimit = 10000,
-                CreateLogGroup = true
-            };
-
-            loggerConfig = loggerConfig.WriteTo.AmazonCloudWatch(cloudWatchOptions, cloudWatchClient);
-        }
-
-        // Create the Serilog pipeline (sinks configured above, e.g., AWS CloudWatch)
-        Log.Logger = loggerConfig.CreateLogger();
-
-        // Create a Microsoft LoggerFactory that uses two providers:
-        // 1) Serilog provider -> forwards Microsoft logs to the Serilog pipeline (CloudWatch)
-        // 2) Console provider -> writes to the console directly
-        // So ILogger below is a composite that fan-outs to both CloudWatch (via Serilog) and Console.
-        using var loggerFactory = LoggerFactory.Create(builder =>
-        {
-            builder.ClearProviders();
-            builder.AddConsole(); // also log to console via MS provider
-            builder.AddSerilog(Log.Logger, dispose: true); // forward to Serilog sinks (CloudWatch)
-            builder.SetMinimumLevel(LogLevel.Information); // Set the log level
-        });
-
+    private static async Task RunAsync(string[] args)
+    {
         // ✅ Create Logger
+        var loggerFactory = await CreateLoggerAsync();
         ILogger logger = loggerFactory.CreateLogger<Program>();
+
         // Emit a startup log via both pipelines for diagnostics
         logger.LogInformation("GenetecSyncConsole starting at {UtcNow}", DateTime.UtcNow);
-        Serilog.Log.Information("[Serilog] GenetecSyncConsole starting at {UtcNow}", DateTime.UtcNow);
+        Log.Information("[Serilog] GenetecSyncConsole starting at {UtcNow}", DateTime.UtcNow);
 
         var cancellationTokenSource = new CancellationTokenSource();
         Console.CancelKeyPress += (_, eventArgs) =>
@@ -86,21 +42,14 @@ class Program
         // ✅ Check for status update flag
         if (args.Any(a => a.Equals("--update-status", StringComparison.OrdinalIgnoreCase)))
         {
-            logger.LogInformation("--update-status flag detected. Running status synchronization...");
-            var statusLogger = loggerFactory.CreateLogger<StatusSyncService>();
-            await using var upDb = new AppDbContext();
-            await using var up = new SourceUnitOfWork(upDb);
-            await using var genetecDb = new GenetecDbContext();
-            var statusService = new StatusSyncService(up, genetecDb, statusLogger);
-            await statusService.SyncAsync(cancellationTokenSource.Token);
-            // Flush logs
-            await Log.CloseAndFlushAsync();
+            await HandleUpdateStatusAsync(loggerFactory, logger, cancellationTokenSource.Token);
             return;
         }
 
         // ✅ Check for export pictures flag
         // Supports: "--export-pictures", "--export-pictures=/path", or "--export-pictures /path"
-        string? exportArg = args.FirstOrDefault(a => a.StartsWith("--export-pictures", StringComparison.OrdinalIgnoreCase));
+        string? exportArg =
+            args.FirstOrDefault(a => a.StartsWith("--export-pictures", StringComparison.OrdinalIgnoreCase));
         bool exportPictures = exportArg != null;
         if (!exportPictures)
         {
@@ -118,32 +67,7 @@ class Program
 
         if (exportPictures)
         {
-            string? exportDir = null;
-            if (exportArg != null)
-            {
-                var idx = exportArg.IndexOf('=');
-                if (idx >= 0 && idx < exportArg.Length - 1)
-                {
-                    exportDir = exportArg[(idx + 1)..];
-                }
-                else if (!exportArg.StartsWith("--export-pictures", StringComparison.OrdinalIgnoreCase))
-                {
-                    // split arg form captured as exportArg
-                    exportDir = exportArg;
-                }
-            }
-
-            var effectiveDir = string.IsNullOrWhiteSpace(exportDir)
-                            ? Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, "exported-pictures"))
-                            : exportDir;
-                        logger.LogInformation("--export-pictures flag detected. Exporting pictures to directory: {Dir}", effectiveDir);
-            await using var genetecDb = new GenetecDbContext();
-            var exportLogger = loggerFactory.CreateLogger<PictureExportService>();
-            var exportService = new PictureExportService(genetecDb, exportLogger);
-            var count = await exportService.ExportCardholderPicturesAsync(effectiveDir, cancellationTokenSource.Token);
-            logger.LogInformation("Export completed. Files written: {Count}", count);
-            // Flush logs
-            await Log.CloseAndFlushAsync();
+            await HandleExportPicturesAsync(loggerFactory, logger, exportArg, cancellationTokenSource.Token);
             return;
         }
 
@@ -181,7 +105,10 @@ class Program
                         await worker.SyncAsync(d.Date, cancellationTokenSource.Token);
                     }
                 }
-                else { logger.LogError("Invalid date form for --since param. Please use yyyy-MM-dd"); }
+                else
+                {
+                    logger.LogError("Invalid date form for --since param. Please use yyyy-MM-dd");
+                }
             }
             else
             {
@@ -195,12 +122,122 @@ class Program
                     logger.LogInformation("Valid date received: {Date}", parsedDate);
                     await worker.SyncAsync(parsedDate, cancellationTokenSource.Token);
                 }
-                else { logger.LogError("Invalid date format! Please use yyyy-MM-dd"); }
-                
+                else
+                {
+                    logger.LogError("Invalid date format! Please use yyyy-MM-dd");
+                }
             }
         }
-        
+
         // Flush logs
+        await Log.CloseAndFlushAsync();
+    }
+
+    private static async Task<ILoggerFactory> CreateLoggerAsync()
+    {
+        // ✅ Set up Serilog with AWS CloudWatch
+        // Read AWS config from environment variables
+        var awsRegion = Environment.GetEnvironmentVariable("AWS_REGION") ??
+                        Environment.GetEnvironmentVariable("AWS_DEFAULT_REGION");
+        const string logGroup = "alusa/genetec-bridge";
+        const string logStreamPrefix = "up";
+
+        if (string.IsNullOrWhiteSpace(awsRegion))
+        {
+            await Console.Error.WriteLineAsync(
+                "AWS_REGION (or AWS_DEFAULT_REGION) environment variable is not set. Falling back to console logging only.");
+        }
+
+        var loggerConfig = new LoggerConfiguration()
+            .MinimumLevel.Information()
+            .Enrich.FromLogContext();
+
+        if (!string.IsNullOrWhiteSpace(awsRegion))
+        {
+            var regionEndpoint = RegionEndpoint.GetBySystemName(awsRegion);
+            var creds = new EnvironmentVariablesAWSCredentials();
+
+            var cloudWatchClient = new AmazonCloudWatchLogsClient(creds, regionEndpoint);
+            var streamName = $"{logStreamPrefix}-{Environment.MachineName}-{DateTime.UtcNow:yyyyMMdd}";
+            var cloudWatchOptions = new CloudWatchSinkOptions
+            {
+                LogGroupName = logGroup,
+                TextFormatter = new CompactJsonFormatter(),
+                LogStreamNameProvider = new StaticLogStreamProvider(streamName),
+                Period = TimeSpan.FromSeconds(5),
+                BatchSizeLimit = 100,
+                QueueSizeLimit = 10000,
+                CreateLogGroup = true
+            };
+
+            loggerConfig = loggerConfig.WriteTo.AmazonCloudWatch(cloudWatchOptions, cloudWatchClient);
+        }
+
+        // Create the Serilog pipeline (sinks configured above, e.g., AWS CloudWatch)
+        Log.Logger = loggerConfig.CreateLogger();
+
+        // Create a Microsoft LoggerFactory that uses two providers:
+        // 1) Serilog provider -> forwards Microsoft logs to the Serilog pipeline (CloudWatch)
+        // 2) Console provider -> writes to the console directly
+        // So ILogger below is a composite that fan-outs to both CloudWatch (via Serilog) and Console.
+        return LoggerFactory.Create(builder =>
+        {
+            builder.ClearProviders();
+            builder.AddConsole(); // also log to console via MS provider
+            builder.AddSerilog(Log.Logger, dispose: true); // forward to Serilog sinks (CloudWatch)
+            builder.SetMinimumLevel(LogLevel.Information); // Set the log level
+        });
+    }
+
+    private static async Task HandleUpdateStatusAsync(ILoggerFactory loggerFactory, ILogger logger,
+        CancellationToken ct)
+    {
+        logger.LogInformation("--update-status flag detected. Running status synchronization...");
+        var statusLogger = loggerFactory.CreateLogger<StatusSyncService>();
+        await using var upDb = new AppDbContext();
+        await using var up = new SourceUnitOfWork(upDb);
+        await using var genetecDb = new GenetecDbContext();
+        var statusService = new StatusSyncService(up, genetecDb, statusLogger);
+        await statusService.SyncAsync(ct);
+        await Log.CloseAndFlushAsync();
+    }
+
+    private static async Task HandleExportPicturesAsync(ILoggerFactory loggerFactory, ILogger logger, string? exportArg,
+        CancellationToken ct)
+    {
+        string? exportDir = null;
+        if (exportArg != null)
+        {
+            var idx = exportArg.IndexOf('=');
+            if (idx >= 0 && idx < exportArg.Length - 1)
+            {
+                exportDir = exportArg[(idx + 1)..];
+            }
+            else if (!exportArg.StartsWith("--export-pictures", StringComparison.OrdinalIgnoreCase))
+            {
+                exportDir = exportArg; // split arg form captured as exportArg
+            }
+        }
+
+        var effectiveDir = string.IsNullOrWhiteSpace(exportDir)
+            ? Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, "exported-pictures"))
+            : exportDir;
+
+        Console.Write($"This will export all cardholder pictures to: {effectiveDir}\nProceed? [y/N] ");
+        var response = Console.ReadLine()?.Trim().ToLowerInvariant();
+        if (response != "y")
+        {
+            logger.LogInformation("Export cancelled by user.");
+            await Log.CloseAndFlushAsync();
+            return;
+        }
+
+        logger.LogInformation("--export-pictures flag detected. Exporting pictures to directory: {Dir}", effectiveDir);
+        await using var genetecDb = new GenetecDbContext();
+        var exportLogger = loggerFactory.CreateLogger<PictureExportService>();
+        var exportService = new PictureExportService(genetecDb, exportLogger);
+        var count = await exportService.ExportCardholderPicturesAsync(effectiveDir, ct);
+        logger.LogInformation("Export completed. Files written: {Count}", count);
         await Log.CloseAndFlushAsync();
     }
 }
