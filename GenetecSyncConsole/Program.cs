@@ -98,6 +98,55 @@ class Program
             return;
         }
 
+        // ✅ Check for export pictures flag
+        // Supports: "--export-pictures", "--export-pictures=/path", or "--export-pictures /path"
+        string? exportArg = args.FirstOrDefault(a => a.StartsWith("--export-pictures", StringComparison.OrdinalIgnoreCase));
+        bool exportPictures = exportArg != null;
+        if (!exportPictures)
+        {
+            // also support split form: --export-pictures <dir>
+            for (int i = 0; i < args.Length; i++)
+            {
+                if (args[i].Equals("--export-pictures", StringComparison.OrdinalIgnoreCase))
+                {
+                    exportPictures = true;
+                    exportArg = i + 1 < args.Length ? args[i + 1] : null;
+                    break;
+                }
+            }
+        }
+
+        if (exportPictures)
+        {
+            string? exportDir = null;
+            if (exportArg != null)
+            {
+                var idx = exportArg.IndexOf('=');
+                if (idx >= 0 && idx < exportArg.Length - 1)
+                {
+                    exportDir = exportArg[(idx + 1)..];
+                }
+                else if (!exportArg.StartsWith("--export-pictures", StringComparison.OrdinalIgnoreCase))
+                {
+                    // split arg form captured as exportArg
+                    exportDir = exportArg;
+                }
+            }
+
+            var effectiveDir = string.IsNullOrWhiteSpace(exportDir)
+                            ? Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, "exported-pictures"))
+                            : exportDir;
+                        logger.LogInformation("--export-pictures flag detected. Exporting pictures to directory: {Dir}", effectiveDir);
+            await using var genetecDb = new GenetecDbContext();
+            var exportLogger = loggerFactory.CreateLogger<PictureExportService>();
+            var exportService = new PictureExportService(genetecDb, exportLogger);
+            var count = await exportService.ExportCardholderPicturesAsync(effectiveDir, cancellationTokenSource.Token);
+            logger.LogInformation("Export completed. Files written: {Count}", count);
+            // Flush logs
+            await Log.CloseAndFlushAsync();
+            return;
+        }
+
         // ✅ Create sync service and worker for regular sync
         var service = new SyncService(logger);
         var worker = new Worker(service, logger);
