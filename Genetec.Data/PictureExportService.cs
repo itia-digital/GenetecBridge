@@ -1,6 +1,7 @@
 using Genetec.Data.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Core.Data.Extensions;
 
 namespace Genetec.Data;
 
@@ -12,6 +13,13 @@ public class PictureExportService(GenetecDbContext context, ILogger<PictureExpor
 {
     private readonly GenetecDbContext _context = context ?? throw new ArgumentNullException(nameof(context));
     private readonly ILogger<PictureExportService> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+    private record CardHolderPicture
+    {
+        public required string UpId { get; set; }
+        public required byte[] Contents { get; set; }
+        public required string Extension { get; set; }
+    }
 
     /// <summary>
     /// Export all cardholders' pictures to the given directory.
@@ -27,47 +35,48 @@ public class PictureExportService(GenetecDbContext context, ILogger<PictureExpor
             : Path.GetFullPath(directory!);
 
         Directory.CreateDirectory(targetDir);
-
-        // Load only the data we need
-        var cardholders = await _context.Cardholders
-            .AsNoTracking()
-            .Include(c => c.PictureNavigation)
-            .Where(c => c.UpId != null && c.Picture != null && c.PictureNavigation != null)
-            .Select(c => new
-            {
-                c.UpId,
-                c.PictureNavigation!.Contents,
-                c.PictureNavigation.Extension
-            })
-            .ToListAsync(cancellationToken);
-
-        int success = 0;
-        foreach (var ch in cardholders)
+        
+        var success = 0;
+        await foreach (var chunk in FetchAsync(cancellationToken))
         {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            if (string.IsNullOrWhiteSpace(ch.UpId) || ch.Contents == null || ch.Contents.Length == 0)
+            foreach (var ch in chunk)
             {
-                continue;
-            }
+                cancellationToken.ThrowIfCancellationRequested();
 
-            var ext = SanitizeExtension(ch.Extension);
-            var fileName = $"{ch.UpId}{(string.IsNullOrEmpty(ext) ? string.Empty : $".{ext}")}";
-            var path = Path.Combine(targetDir, fileName);
+                if (string.IsNullOrWhiteSpace(ch.UpId) || ch.Contents == null || ch.Contents.Length == 0)
+                {
+                    continue;
+                }
 
-            try
-            {
-                await File.WriteAllBytesAsync(path, ch.Contents, cancellationToken);
-                success++;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to write picture file for UpId {UpId} at {Path}", ch.UpId, path);
-                // Continue with other files
+                var ext = SanitizeExtension(ch.Extension);
+                var fileName = $"{ch.UpId}{(string.IsNullOrEmpty(ext) ? string.Empty : $".{ext}")}";
+                var path = Path.Combine(targetDir, fileName);
+
+                try
+                {
+                    await File.WriteAllBytesAsync(path, ch.Contents, cancellationToken);
+                    success++;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to write picture file for UpId {UpId} at {Path}", ch.UpId, path);
+                }
             }
         }
 
         return success;
+    }
+
+    private IAsyncEnumerable<List<CardHolderPicture>> FetchAsync(CancellationToken cancellationToken = default)
+    {
+        // Prepare the query: only the data we need
+        var query = _context.Cardholders
+            .AsNoTracking()
+            .Include(c => c.PictureNavigation)
+            .Where(c => c.UpId != null && c.Picture != null && c.PictureNavigation != null)
+            .Select(c => new CardHolderPicture { UpId = c.UpId, Contents = c.PictureNavigation!.Contents, Extension = c.PictureNavigation.Extension });
+
+        return query.FetchAsync(chunkSize: 1000, cancellationToken: cancellationToken);
     }
 
     private static string? SanitizeExtension(string? extension)
