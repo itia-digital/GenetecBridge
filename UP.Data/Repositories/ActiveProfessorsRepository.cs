@@ -1,13 +1,12 @@
 ﻿using Core.Data;
+using Core.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 using UP.Data.Context;
 using UP.Data.Models;
 
 namespace UP.Data.Repositories;
 
-public interface IActiveProfessorsRepository : IRepository;
-
-public class ActiveProfessorsRepository(UpDbContext context)
+public class ActiveProfessorsRepository(AppDbContext context)
     : Repository(context: context),
         IActiveProfessorsRepository
 {

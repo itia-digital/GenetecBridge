@@ -1,9 +1,9 @@
+using AnthologySap;
+using AnthologySap.Models;
 using Core.Data;
 using Genetec.Data;
 using Genetec.Data.Context;
 using Microsoft.EntityFrameworkCore;
-using UP.Data;
-using UP.Data.Context;
 
 namespace GenetecBridgeTester;
 
@@ -18,7 +18,7 @@ public class InactiveEmployeesSyncServiceTests
     {
         SyncWorker sync = new(_context, new TestsLogger());
         _service = new InactiveEmployeesSyncService(sync,
-            new UpUnitOfWork(new UpDbContext()));
+            new SourceUnitOfWork(new AppDbContext()));
     }
 
     [Theory]

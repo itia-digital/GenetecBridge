@@ -1,17 +1,10 @@
 using Core.Data.Extensions;
+using Core.Data.Repositories;
 using UP.Data.Context;
 
 namespace UP.Data.Repositories;
 
-public interface IStatusRepository
-{
-    IAsyncEnumerable<List<string>> FetchAsync(
-        bool active, int limit = 0, int chunkSize = 10000,
-        CancellationToken cancellationToken = default
-    );
-}
-
-public class StatusRepository(UpDbContext context) : IStatusRepository
+public class StatusRepository(AppDbContext context) : IStatusRepository
 {
     private IQueryable<string> GetActiveRecordsIds() => context.PsUpIdGralTVws
         .Where(e => !InActiveStatuses.Contains(e.StatusField))

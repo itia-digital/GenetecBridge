@@ -1,12 +1,10 @@
-﻿using Core.Data.Extensions;
+﻿using Core.Data;
 using Genetec.Data.Context;
-using Genetec.Data.Models;
 using Microsoft.EntityFrameworkCore;
-using UP.Data;
 
 namespace Genetec.Data;
 
-public class StatusSyncWorker(IUpUnitOfWork up, GenetecDbContext genetec)
+public class StatusSyncWorker(ISourceUnitOfWork source, GenetecDbContext genetec)
 {
     /// <summary>
     ///     Syncs all records status (active or inactive).
@@ -18,7 +16,7 @@ public class StatusSyncWorker(IUpUnitOfWork up, GenetecDbContext genetec)
     public async Task<int> SyncAsync(bool active, int limit = 0, int chunkSize = 10000,
         CancellationToken cancellationToken = default)
     {
-        var fetchedRecords = up.Status
+        var fetchedRecords = source.Status
             .FetchAsync(active, limit, chunkSize, cancellationToken);
 
         var totalAffected = 0;

@@ -1,10 +1,10 @@
-﻿using Genetec.Data.Context;
+﻿using Core.Data;
+using Genetec.Data.Context;
 using Microsoft.Extensions.Logging;
-using UP.Data;
 
 namespace Genetec.Data;
 
-public class StatusSyncService(IUpUnitOfWork up, GenetecDbContext genetec, ILogger<StatusSyncService> logger)
+public class StatusSyncService(ISourceUnitOfWork source, GenetecDbContext genetec, ILogger<StatusSyncService> logger)
 {
     /// <summary>
     ///     Syncs all records statuses: active and inactive.
@@ -12,7 +12,7 @@ public class StatusSyncService(IUpUnitOfWork up, GenetecDbContext genetec, ILogg
     /// <param name="cancellationToken"></param>
     public async Task SyncAsync(CancellationToken cancellationToken = default)
     {
-        var worker = new StatusSyncWorker(up, genetec);
+        var worker = new StatusSyncWorker(source, genetec);
 
         // Deactivate all applicable records
         var totalInactive = await worker.SyncAsync(false, 0, 5000, cancellationToken);

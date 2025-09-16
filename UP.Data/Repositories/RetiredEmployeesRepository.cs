@@ -1,16 +1,12 @@
 ﻿using Core.Data;
+using Core.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 using UP.Data.Context;
 using UP.Data.Models;
 
 namespace UP.Data.Repositories;
 
-/// <summary>
-///     Retired employees
-/// </summary>
-public interface IRetiredRepository : IRepository;
-
-public class RetiredEmployeesRepository(UpDbContext context)
+public class RetiredEmployeesRepository(AppDbContext context)
     : Repository(context: context), IRetiredRepository
 {
     protected override IQueryable<PsUpIdGralTVw> Query()

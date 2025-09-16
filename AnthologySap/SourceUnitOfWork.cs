@@ -1,24 +1,12 @@
-﻿using UP.Data.Context;
-using UP.Data.Repositories;
+﻿using AnthologySap.Models;
+using AnthologySap.Repositories;
+using Core.Data;
+using Core.Data.Repositories;
 
-namespace UP.Data;
+namespace AnthologySap;
 
 // ReSharper disable once InconsistentNaming
-public interface IUpUnitOfWork : IDisposable, IAsyncDisposable
-{
-    IActiveEmployeesRepository ActiveEmployees { get; }
-    IActiveProfessorsRepository ActiveProfessors { get; }
-    IActiveStudentsRepository ActiveStudents { get; }
-    IGraduatedRepository Graduated { get; }
-    IInactiveEmployeesRepository InactiveEmployees { get; }
-    IInactiveProfessorsRepository InactiveProfessors { get; }
-    IInactiveStudentsRepository InactiveStudents { get; }
-    IStatusRepository Status { get; }
-    IRetiredRepository RetiredEmployees { get; }
-    IUtilitiesRepository Utilities { get; }
-}
-
-public class UpUnitOfWork(UpDbContext context) : IUpUnitOfWork
+public class SourceUnitOfWork(AppDbContext context) : ISourceUnitOfWork
 {
     private IActiveEmployeesRepository? _activeEmployees;
 

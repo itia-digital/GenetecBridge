@@ -1,15 +1,15 @@
-﻿using Core.Data;
+﻿using AnthologySap;
+using AnthologySap.Models;
+using Core.Data;
 using Genetec.Data;
 using Genetec.Data.Context;
-using UP.Data;
-using UP.Data.Context;
 
 namespace GenetecBridgeTester;
 
 public class SyncByStatusTests
 {
     private readonly StatusSyncService _syncService = new(
-        new UpUnitOfWork(new UpDbContext()),
+        new SourceUnitOfWork(new AppDbContext()),
         new GenetecDbContext(),
         Utils.GetLogger<StatusSyncService>()
     );

@@ -1,9 +1,9 @@
-﻿using Core.Data;
+﻿using AnthologySap;
+using AnthologySap.Models;
+using Core.Data;
 using Genetec.Data.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using UP.Data;
-using UP.Data.Context;
 
 namespace Genetec.Data;
 
@@ -11,8 +11,8 @@ public class SyncService : IDisposable, IAsyncDisposable
 {
     private readonly ILogger _logger;
     private readonly SyncWorker _sync;
-    private readonly UpUnitOfWork _uow;
-    private readonly UpDbContext _upDb = new();
+    private readonly SourceUnitOfWork _uow;
+    private readonly AppDbContext _appDb = new();
     private readonly GenetecDbContext _genetecDb = new();
 
     private readonly ISyncService _students;
@@ -27,7 +27,7 @@ public class SyncService : IDisposable, IAsyncDisposable
     public SyncService(ILogger logger)
     {
         _logger = logger;
-        _uow = new UpUnitOfWork(_upDb);
+        _uow = new SourceUnitOfWork(_appDb);
         _sync = new SyncWorker(_genetecDb, logger);
 
         _students = new ActiveStudentsSyncService(_sync, _uow);
@@ -132,11 +132,11 @@ public class SyncService : IDisposable, IAsyncDisposable
 
     public void Dispose()
     {
-        _upDb.Dispose();
+        _appDb.Dispose();
     }
 
     public async ValueTask DisposeAsync()
     {
-        await _upDb.DisposeAsync();
+        await _appDb.DisposeAsync();
     }
 }

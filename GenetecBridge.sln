@@ -12,6 +12,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenetecSyncConsole", "Genet
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenetecPhotoSyncConsole", "GenetecPhotoSyncConsole\GenetecPhotoSyncConsole.csproj", "{B03D2124-D8EB-48A0-A729-48D5949670ED}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnthologySap", "AnthologySap\AnthologySap.csproj", "{66C4D597-7044-4FD0-ACE7-8F1958B6A9FE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,5 +44,9 @@ Global
 		{B03D2124-D8EB-48A0-A729-48D5949670ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B03D2124-D8EB-48A0-A729-48D5949670ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B03D2124-D8EB-48A0-A729-48D5949670ED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{66C4D597-7044-4FD0-ACE7-8F1958B6A9FE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{66C4D597-7044-4FD0-ACE7-8F1958B6A9FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{66C4D597-7044-4FD0-ACE7-8F1958B6A9FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{66C4D597-7044-4FD0-ACE7-8F1958B6A9FE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

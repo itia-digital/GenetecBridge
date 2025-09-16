@@ -4,13 +4,13 @@ using UP.Data.Models;
 
 namespace UP.Data.Context;
 
-public partial class UpDbContext : DbContext
+public partial class AppDbContext : DbContext
 {
-    public UpDbContext()
+    public AppDbContext()
     {
     }
 
-    public UpDbContext(DbContextOptions<UpDbContext> options)
+    public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)
     {
     }

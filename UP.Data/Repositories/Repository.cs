@@ -6,13 +6,7 @@ using UP.Data.Models;
 
 namespace UP.Data.Repositories;
 
-public interface IRepository
-{
-    IAsyncEnumerable<List<UpRecordValue>> FetchAsync(int limit = 0, int chunkSize = 1000,
-        DateTime? date = null, CancellationToken cancellationToken = default);
-}
-
-public abstract class Repository(UpDbContext context)
+public abstract class Repository(AppDbContext context)
 {
     protected virtual IQueryable<PsUpIdGralTVw> Query() => context.PsUpIdGralTVws.Select(
         e => new PsUpIdGralTVw

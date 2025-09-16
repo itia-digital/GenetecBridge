@@ -15,8 +15,8 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\AnthologySap\AnthologySap.csproj" />
         <ProjectReference Include="..\Core.Data\Core.Data.csproj"/>
-        <ProjectReference Include="..\UP.Data\UP.Data.csproj"/>
     </ItemGroup>
 
 </Project>
