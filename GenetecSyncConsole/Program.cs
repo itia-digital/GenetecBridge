@@ -68,6 +68,8 @@ class Program
         if (exportPictures)
         {
             await HandleExportPicturesAsync(loggerFactory, logger, exportArg, cancellationTokenSource.Token);
+            Console.WriteLine("Press any key to exit...");
+            Console.ReadKey();
             return;
         }
 
@@ -238,7 +240,6 @@ class Program
         var exportService = new PictureExportService(genetecDb, exportLogger);
         var count = await exportService.ExportCardholderPicturesAsync(effectiveDir, ct);
         logger.LogInformation("Export completed. Files written: {Count}", count);
-        Console.WriteLine("Press any key to exit...");
         await Log.CloseAndFlushAsync();
     }
 }
