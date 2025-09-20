@@ -3,13 +3,9 @@ using Genetec.Data;
 using Genetec.Data.Context;
 using Microsoft.Extensions.Logging;
 using Serilog;
-using Amazon;
-using Amazon.Runtime;
-using Amazon.CloudWatchLogs;
 using AnthologySap;
 using AnthologySap.Models;
-using Serilog.Formatting.Compact;
-using Serilog.Sinks.AwsCloudWatch;
+using Serilog.Events;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace GenetecSyncConsole;
@@ -24,7 +20,7 @@ class Program
     private static async Task RunAsync(string[] args)
     {
         // ✅ Create Logger
-        var loggerFactory = await CreateLoggerAsync();
+        var loggerFactory = CreateLogger();
         ILogger logger = loggerFactory.CreateLogger<Program>();
 
         // Emit a startup log via both pipelines for diagnostics
@@ -38,7 +34,7 @@ class Program
             cancellationTokenSource.Cancel();
             eventArgs.Cancel = true; // Prevents immediate termination
         };
-
+        
         // ✅ Check for status update flag
         if (args.Any(a => a.Equals("--update-status", StringComparison.OrdinalIgnoreCase)))
         {
@@ -135,59 +131,32 @@ class Program
         await Log.CloseAndFlushAsync();
     }
 
-    private static async Task<ILoggerFactory> CreateLoggerAsync()
+    private static ILoggerFactory CreateLogger()
     {
-        // ✅ Set up Serilog with AWS CloudWatch
-        // Read AWS config from environment variables
-        var awsRegion = Environment.GetEnvironmentVariable("AWS_REGION") ??
-                        Environment.GetEnvironmentVariable("AWS_DEFAULT_REGION");
-        const string logGroup = "alusa/genetec-bridge";
-        const string logStreamPrefix = "up";
+        // Configure Serilog to log to console and rolling weekly log files
+        var logsDir = Path.Combine(AppContext.BaseDirectory, "logs");
+        Directory.CreateDirectory(logsDir);
+        var now = DateTime.Now;
+        var week = CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(now, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+        var logFilePath = Path.Combine(logsDir, $"{now:yyyy}{now:MM}-W{week:D2}.log");
 
-        if (string.IsNullOrWhiteSpace(awsRegion))
-        {
-            await Console.Error.WriteLineAsync(
-                "AWS_REGION (or AWS_DEFAULT_REGION) environment variable is not set. Falling back to console logging only.");
-        }
-
-        var loggerConfig = new LoggerConfiguration()
+        Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Information()
-            .Enrich.FromLogContext();
+            .Enrich.FromLogContext()
+            .WriteTo.File(
+                path: logFilePath,
+                shared: true,
+                restrictedToMinimumLevel: LogEventLevel.Information,
+                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
+            )
+            .CreateLogger();
 
-        if (!string.IsNullOrWhiteSpace(awsRegion))
-        {
-            var regionEndpoint = RegionEndpoint.GetBySystemName(awsRegion);
-            var creds = new EnvironmentVariablesAWSCredentials();
-
-            var cloudWatchClient = new AmazonCloudWatchLogsClient(creds, regionEndpoint);
-            var streamName = $"{logStreamPrefix}-{Environment.MachineName}-{DateTime.UtcNow:yyyyMMdd}";
-            var cloudWatchOptions = new CloudWatchSinkOptions
-            {
-                LogGroupName = logGroup,
-                TextFormatter = new CompactJsonFormatter(),
-                LogStreamNameProvider = new StaticLogStreamProvider(streamName),
-                Period = TimeSpan.FromSeconds(5),
-                BatchSizeLimit = 100,
-                QueueSizeLimit = 10000,
-                CreateLogGroup = true
-            };
-
-            loggerConfig = loggerConfig.WriteTo.AmazonCloudWatch(cloudWatchOptions, cloudWatchClient);
-        }
-
-        // Create the Serilog pipeline (sinks configured above, e.g., AWS CloudWatch)
-        Log.Logger = loggerConfig.CreateLogger();
-
-        // Create a Microsoft LoggerFactory that uses two providers:
-        // 1) Serilog provider -> forwards Microsoft logs to the Serilog pipeline (CloudWatch)
-        // 2) Console provider -> writes to the console directly
-        // So ILogger below is a composite that fan-outs to both CloudWatch (via Serilog) and Console.
         return LoggerFactory.Create(builder =>
         {
             builder.ClearProviders();
-            builder.AddConsole(); // also log to console via MS provider
-            builder.AddSerilog(Log.Logger, dispose: true); // forward to Serilog sinks (CloudWatch)
-            builder.SetMinimumLevel(LogLevel.Information); // Set the log level
+            // Route Microsoft.Extensions.Logging to Serilog (which writes Console + File)
+            builder.AddSerilog(Log.Logger, dispose: true);
+            builder.SetMinimumLevel(LogLevel.Information);
         });
     }
 
@@ -241,15 +210,5 @@ class Program
         var count = await exportService.ExportCardholderPicturesAsync(effectiveDir, ct);
         logger.LogInformation("Export completed. Files written: {Count}", count);
         await Log.CloseAndFlushAsync();
-    }
-}
-
-internal sealed class StaticLogStreamProvider(string name) : ILogStreamNameProvider
-{
-    private readonly string _name = name ?? throw new ArgumentNullException(nameof(name));
-
-    public string GetLogStreamName()
-    {
-        return _name;
     }
 }

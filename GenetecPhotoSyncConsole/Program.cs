@@ -1,4 +1,5 @@
-﻿using Genetec.Data.Context;
+﻿using System.Globalization;
+using Genetec.Data.Context;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Events;
@@ -12,18 +13,24 @@ class Program
         // ✅ Create a Logger Factory
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            string logFilePath = Path.Combine(AppContext.BaseDirectory, "logs", $"_{DateTime.Today:yyyy-MM-dd}.errors.log");
+            var logsDir = Path.Combine(AppContext.BaseDirectory, "logs");
+            Directory.CreateDirectory(logsDir);
+            var now = DateTime.Now;
+            var week = CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(now, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+            var fileName = $"{now:yyyy}{now:MM}-W{week:D2}-photo.log";
+            string logFilePath = Path.Combine(logsDir, fileName);
+
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
-                .WriteTo.Console()
                 .WriteTo.File(
                     path: logFilePath,
-                    restrictedToMinimumLevel: LogEventLevel.Error,
-                    rollingInterval: RollingInterval.Day,
+                    restrictedToMinimumLevel: LogEventLevel.Information,
+                    shared: true,
                     outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
                 )
                 .CreateLogger();
-            
+
+            builder.AddConsole();
             builder.AddSerilog();
             builder.SetMinimumLevel(LogLevel.Information); // Set log level
         });
