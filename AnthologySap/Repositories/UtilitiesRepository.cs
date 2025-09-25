@@ -24,7 +24,10 @@ public class UtilitiesRepository(AppDbContext context) : IUtilitiesRepository
                             && (a.ProgStatus == "Egresado" || a.ProgStatus == "EGRP"))
                     )
             )
-            .Select(i => i.Emplid.Trim())
+            .Select(e => e.Emplid.Length > 7
+                ? e.Emplid.Substring(e.Emplid.Length - 7, 7)
+                : e.Emplid
+            )
             .Distinct()
             .ToListAsync(cancellationToken);
 
