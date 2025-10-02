@@ -34,8 +34,7 @@ public partial class GenetecDbContext : DbContext
         => optionsBuilder
             .UseSqlServer(
                 "Server=172.25.15.123\\ACCESOS;Database=Directory1;TrustServerCertificate=True;User ID=genetec;Password=genetec"
-            )
-            .LogTo(Console.WriteLine, LogLevel.Information);
+            );
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
