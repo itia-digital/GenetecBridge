@@ -82,7 +82,29 @@ class Program
         }
         else
         {
-            if (args.First().StartsWith("--since=", StringComparison.OrdinalIgnoreCase))
+            if (args.First().StartsWith("--last-days=", StringComparison.OrdinalIgnoreCase))
+            {
+                var daysString = args.First()["--last-days=".Length..];
+                if (int.TryParse(daysString, out var days) && days >= 0)
+                {
+                    var sinceDate = DateTime.Today.AddDays(-days);
+                    logger.LogInformation("Running sync for last {Days} day(s): from {Since} to {Today}", days, sinceDate, DateTime.Today);
+                    var dateList = Enumerable.Range(0, (DateTime.Today - sinceDate).Days + 1)
+                        .Select(offset => sinceDate.AddDays(offset))
+                        .ToList();
+
+                    foreach (var d in dateList)
+                    {
+                        logger.LogInformation("Syncing {Date}..", d.Date);
+                        await worker.SyncAsync(d.Date, cancellationTokenSource.Token);
+                    }
+                }
+                else
+                {
+                    logger.LogError("Invalid --last-days value. Please provide a non-negative integer (e.g., --last-days=7).");
+                }
+            }
+            else if (args.First().StartsWith("--since=", StringComparison.OrdinalIgnoreCase))
             {
                 //   ✅ Since date: Try to parse the date
                 var sinceDateString = args.First()["--since=".Length..];
@@ -99,7 +121,7 @@ class Program
 
                     foreach (var d in dateList)
                     {
-                        logger.LogInformation("Syncing {Date}..", sinceDate);
+                        logger.LogInformation("Syncing {Date}..", d.Date);
                         await worker.SyncAsync(d.Date, cancellationTokenSource.Token);
                     }
                 }
