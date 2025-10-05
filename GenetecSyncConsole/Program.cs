@@ -179,7 +179,9 @@ class Program
         return LoggerFactory.Create(builder =>
         {
             builder.ClearProviders();
-            // Route Microsoft.Extensions.Logging to Serilog (which writes Console + File)
+            // Also log to console for interactive runs
+            builder.AddConsole();
+            // Route Microsoft.Extensions.Logging to Serilog (which writes to File)
             builder.AddSerilog(Log.Logger, dispose: true);
             builder.SetMinimumLevel(LogLevel.Information);
         });
