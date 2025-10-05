@@ -97,6 +97,55 @@ cd "C:\Users\dproveedoralusa\RiderProjects\GenetecBridge\Genetec.Data"
 dotnet ef dbcontext scaffold "Server=172.25.15.123\ACCESOS;Database=Directory1;TrustServerCertificate=True;User ID=genetec;Password=genetec" Microsoft.EntityFrameworkCore.SqlServer -o Models -t Entity -t Cardholder -t CardholderMembership -t CustomFieldValue -t FileCache -t AlusaControl --context GenetecDbContext --data-annotations --nullable --force
 ```
 
+#### Analysis for size 8
+```sql
+;WITH U AS (
+    SELECT
+        u.EMPLID,
+        NormalizedEMPLID = RIGHT(u.EMPLID, 7),
+        LenId = LEN(u.EMPLID),
+        FirstNameRaw        = LTRIM(RTRIM(u.FIRST_NAME)),
+        LastNameRaw         = LTRIM(RTRIM(u.LAST_NAME)),
+        SecondLastNameRaw   = LTRIM(RTRIM(u.SECOND_LAST_NAME)),
+        FirstNameNorm = UPPER(LTRIM(RTRIM(u.FIRST_NAME))) COLLATE Latin1_General_CI_AI
+    FROM v_UsuariosUnificados u
+    WHERE u.EMPLID IS NOT NULL AND LEN(u.EMPLID) >= 7
+),
+      Pairs AS (
+          SELECT
+              a.NormalizedEMPLID,
+              a.EMPLID  AS EMPLID_A,
+              b.EMPLID  AS EMPLID_B,
+              a.LenId   AS LEN_A,
+              b.LenId   AS LEN_B,
+
+              -- Nombres y apellidos
+              a.FirstNameRaw      AS FIRST_NAME_A,
+              a.LastNameRaw       AS LAST_NAME_A,
+              a.SecondLastNameRaw AS SECOND_LAST_NAME_A,
+
+              b.FirstNameRaw      AS FIRST_NAME_B,
+              b.LastNameRaw       AS LAST_NAME_B,
+              b.SecondLastNameRaw AS SECOND_LAST_NAME_B,
+
+              -- Identifica si uno es de 7 y otro de 8 caracteres
+              CASE
+                  WHEN a.LenId = 8 AND b.LenId = 7 THEN 'A=8, B=7'
+                  WHEN a.LenId = 7 AND b.LenId = 8 THEN 'A=7, B=8'
+                  WHEN a.LenId = b.LenId THEN CONCAT('Ambos=', a.LenId)
+                  ELSE 'Otro caso'
+                  END AS TipoComparacion
+          FROM U a
+                   JOIN U b
+                        ON a.NormalizedEMPLID = b.NormalizedEMPLID
+                            AND a.EMPLID < b.EMPLID         -- evita duplicar pares
+                            AND a.FirstNameNorm <> b.FirstNameNorm  -- solo diferencias por nombre
+      )
+ SELECT  DISTINCT *
+ FROM Pairs
+ ORDER BY NormalizedEMPLID, EMPLID_A, EMPLID_B;
+```
+
 ## GenetecSyncConsole usage additions
 - Export all pictures to default folder:
   - GenetecSyncConsole --export-pictures
