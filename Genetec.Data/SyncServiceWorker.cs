@@ -5,6 +5,8 @@ namespace Genetec.Data;
 
 public abstract class SyncServiceWorker(SyncWorker worker)
 {
+    protected abstract string TypeOfRecord { get; }
+
     protected async Task SyncAsync(DateTime startedAt, DateTime? syncedDate,
         IAsyncEnumerable<List<UpRecordValue>> fetchedRecords,
         CancellationToken cancellationToken = default)
@@ -12,7 +14,7 @@ public abstract class SyncServiceWorker(SyncWorker worker)
         await foreach (List<UpRecordValue> upItems in fetchedRecords
                            .WithCancellation(cancellationToken))
         {
-            await worker.RunAsync(startedAt, upItems, cancellationToken);
+            await worker.RunAsync(startedAt, upItems, TypeOfRecord, cancellationToken);
         }
 
         AlusaControl control = new()

@@ -12,7 +12,7 @@ public class SyncWorker(GenetecDbContext context, ILogger logger)
 {
     private readonly EntityMapper _entityMapper = new();
 
-    public async Task RunAsync(DateTime startedAt, List<UpRecordValue> records,
+    public async Task RunAsync(DateTime startedAt, List<UpRecordValue> records, string typeOfRecord,
         CancellationToken cancellationToken)
     {
         Dictionary<string, List<UpRecordValue>> source = records.GroupBy(e => e.Id)
@@ -157,7 +157,7 @@ public class SyncWorker(GenetecDbContext context, ILogger logger)
             },
             cancellationToken);
 
-        logger.LogInformation("Synced {count} records for {date}:", records.Count, startedAt.ToString("yyyy-MM-dd"));
+        logger.LogInformation("Synced {count} {typeOfRecord} records:", records.Count, typeOfRecord);
         foreach (var record in records)
         {
             logger.LogInformation("   {UpId} - {Name}", record.Id, record.FullName);;

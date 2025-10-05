@@ -5,6 +5,8 @@ namespace Genetec.Data;
 public class ActiveStudentsSyncService(SyncWorker worker, ISourceUnitOfWork unitOfWork)
     : SyncServiceWorker(worker), ISyncService
 {
+    protected override string TypeOfRecord => "Active students";
+    
     /// <summary>
     ///     Syncs records and set the same genetec access group
     ///     to all the records

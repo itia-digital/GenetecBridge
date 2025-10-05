@@ -22,4 +22,6 @@ public class ActiveProfessorsSyncService(SyncWorker worker, ISourceUnitOfWork un
 
         await SyncAsync(startedAt, date, fetchedRecords, cancellationToken);
     }
+
+    protected override string TypeOfRecord => "Active professors";
 }
