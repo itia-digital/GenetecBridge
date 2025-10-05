@@ -96,3 +96,17 @@ Scaffolding:
 cd "C:\Users\dproveedoralusa\RiderProjects\GenetecBridge\Genetec.Data"
 dotnet ef dbcontext scaffold "Server=172.25.15.123\ACCESOS;Database=Directory1;TrustServerCertificate=True;User ID=genetec;Password=genetec" Microsoft.EntityFrameworkCore.SqlServer -o Models -t Entity -t Cardholder -t CardholderMembership -t CustomFieldValue -t FileCache -t AlusaControl --context GenetecDbContext --data-annotations --nullable --force
 ```
+
+## GenetecSyncConsole usage additions
+- Export all pictures to default folder:
+  - GenetecSyncConsole --export-pictures
+- Export all pictures to a specific folder:
+  - GenetecSyncConsole --export-pictures=C:\\temp\\pics
+  - or: GenetecSyncConsole --export-pictures C:\\temp\\pics
+- Export only pictures for records modified in Anthology on a specific date (yyyy-MM-dd):
+  - GenetecSyncConsole --export-pictures --date=2025-10-05
+  - GenetecSyncConsole --export-pictures C:\\temp\\pics --date 2025-10-05
+
+Notes:
+- The --date filter uses AnthologySap.v_UsuariosUnificados LASTUPDDTTM (date part) to decide which UpIds to export.
+- UpId trimming follows the sync behavior (last 7 characters when EMPLID length > 7).

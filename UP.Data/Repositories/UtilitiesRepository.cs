@@ -30,4 +30,14 @@ public class UtilitiesRepository(AppDbContext context) : IUtilitiesRepository
 
         return result;
     }
+
+    public async Task<List<string>> GetUpIdsModifiedOnDateAsync(DateTime date, CancellationToken cancellationToken = default)
+    {
+        var result = await context.PsUpIdGralTVws
+            .Where(e => e.Lastupddttm != null && e.Emplid != null && e.Lastupddttm!.Value.Date == date.Date)
+            .Select(e => e.Emplid!.Trim())
+            .Distinct()
+            .ToListAsync(cancellationToken);
+        return result;
+    }
 }

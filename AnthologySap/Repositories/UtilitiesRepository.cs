@@ -33,4 +33,15 @@ public class UtilitiesRepository(AppDbContext context) : IUtilitiesRepository
 
         return result;
     }
+
+    public async Task<List<string>> GetUpIdsModifiedOnDateAsync(DateTime date, CancellationToken cancellationToken = default)
+    {
+        var result = await context.VUsuariosUnificados
+            .Where(e => e.Lastupddttm != null && e.Emplid != null && e.Lastupddttm!.Value.Date == date.Date)
+            .Select(e => e.Emplid!.Length > 7 ? e.Emplid.Substring(e.Emplid.Length - 7, 7) : e.Emplid)
+            .Select(id => id!.Trim())
+            .Distinct()
+            .ToListAsync(cancellationToken);
+        return result;
+    }
 }

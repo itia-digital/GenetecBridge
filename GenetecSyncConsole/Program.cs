@@ -14,7 +14,7 @@ class Program
 {
     static async Task Main(string[] args)
     {
-         await RunAsync(args);
+        await RunAsync(args);
     }
 
     private static async Task RunAsync(string[] args)
@@ -34,7 +34,7 @@ class Program
             cancellationTokenSource.Cancel();
             eventArgs.Cancel = true; // Prevents immediate termination
         };
-        
+
         // ✅ Check for status update flag
         if (args.Any(a => a.Equals("--update-status", StringComparison.OrdinalIgnoreCase)))
         {
@@ -63,7 +63,7 @@ class Program
 
         if (exportPictures)
         {
-            await HandleExportPicturesAsync(loggerFactory, logger, exportArg, cancellationTokenSource.Token);
+            await HandleExportPicturesAsync(loggerFactory, logger, exportArg, args, cancellationTokenSource.Token);
             Console.WriteLine("Press any key to exit...");
             Console.ReadKey();
             return;
@@ -88,7 +88,8 @@ class Program
                 if (int.TryParse(daysString, out var days) && days >= 0)
                 {
                     var sinceDate = DateTime.Today.AddDays(-days);
-                    logger.LogInformation("Running sync for last {Days} day(s): from {Since} to {Today}", days, sinceDate, DateTime.Today);
+                    logger.LogInformation("Running sync for last {Days} day(s): from {Since} to {Today}", days,
+                        sinceDate, DateTime.Today);
                     var dateList = Enumerable.Range(0, (DateTime.Today - sinceDate).Days + 1)
                         .Select(offset => sinceDate.AddDays(offset))
                         .ToList();
@@ -101,7 +102,8 @@ class Program
                 }
                 else
                 {
-                    logger.LogError("Invalid --last-days value. Please provide a non-negative integer (e.g., --last-days=7).");
+                    logger.LogError(
+                        "Invalid --last-days value. Please provide a non-negative integer (e.g., --last-days=7).");
                 }
             }
             else if (args.First().StartsWith("--since=", StringComparison.OrdinalIgnoreCase))
@@ -159,7 +161,8 @@ class Program
         var logsDir = Path.Combine(AppContext.BaseDirectory, "logs");
         Directory.CreateDirectory(logsDir);
         var now = DateTime.Now;
-        var week = CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(now, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+        var week = CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(now, CalendarWeekRule.FirstFourDayWeek,
+            DayOfWeek.Monday);
         var logFilePath = Path.Combine(logsDir, $"{now:yyyy}{now:MM}-W{week:D2}.log");
 
         Log.Logger = new LoggerConfiguration()
@@ -196,6 +199,7 @@ class Program
     }
 
     private static async Task HandleExportPicturesAsync(ILoggerFactory loggerFactory, ILogger logger, string? exportArg,
+        string[] args,
         CancellationToken ct)
     {
         string? exportDir = null;
@@ -216,7 +220,45 @@ class Program
             ? Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, "exported-pictures"))
             : exportDir;
 
-        Console.Write($"This will export all cardholder pictures to: {effectiveDir}\nProceed? [y/N] ");
+        // Parse optional --date parameter (yyyy-MM-dd)
+        DateTime? filterDate = null;
+        string? dateArg = args.FirstOrDefault(a => a.StartsWith("--date", StringComparison.OrdinalIgnoreCase));
+        if (dateArg != null)
+        {
+            string? dateValue = null;
+            var idxDate = dateArg.IndexOf('=');
+            if (idxDate >= 0 && idxDate < dateArg.Length - 1)
+            {
+                dateValue = dateArg[(idxDate + 1)..];
+            }
+            else
+            {
+                for (var i = 0; i < args.Length; i++)
+                {
+                    if (!args[i].Equals("--date", StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    if (i + 1 < args.Length) dateValue = args[i + 1];
+                    break;
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(dateValue) && DateTime.TryParseExact(dateValue!, "yyyy-MM-dd",
+                    CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed))
+            {
+                filterDate = parsed.Date;
+            }
+            else
+            {
+                logger.LogError("Invalid --date value. Expected format yyyy-MM-dd (e.g., --date=2025-10-05)");
+                return;
+            }
+        }
+
+        var scopeText = filterDate.HasValue ? $"modified on {filterDate:yyyy-MM-dd} (per Anthology/SAP)" : "(all)";
+        Console.Write($"This will export cardholder pictures {scopeText} to: {effectiveDir}\nProceed? [y/N] ");
         var response = Console.ReadLine()?.Trim().ToLowerInvariant();
         if (response != "y")
         {
@@ -225,12 +267,39 @@ class Program
             return;
         }
 
-        logger.LogInformation("--export-pictures flag detected. Exporting pictures to directory: {Dir}", effectiveDir);
+        logger.LogInformation("--export-pictures flag detected. Exporting pictures to {Dir} {Scope}",
+            effectiveDir, scopeText);
         await using var genetecDb = new GenetecDbContext();
         var exportLogger = loggerFactory.CreateLogger<PictureExportService>();
         var exportService = new PictureExportService(genetecDb, exportLogger);
-        var count = await exportService.ExportCardholderPicturesAsync(effectiveDir, ct);
+
+        int count;
+        if (filterDate.HasValue)
+        {
+            await using var upDb = new AppDbContext();
+            await using var up = new SourceUnitOfWork(upDb);
+            var upIds = await up.Utilities.GetUpIdsModifiedOnDateAsync(filterDate.Value, ct);
+
+            if (upIds.Count == 0)
+            {
+                logger.LogInformation("No Anthology records found with modifications on {Date}. Nothing to export.",
+                    filterDate.Value.Date);
+                count = 0;
+            }
+            else
+            {
+                count = await exportService.ExportCardholderPicturesAsync(effectiveDir, upIds, ct);
+            }
+        }
+        else
+        {
+            count = await exportService.ExportCardholderPicturesAsync(effectiveDir, ct);
+        }
+
         logger.LogInformation("Export completed. Files written: {Count}", count);
         await Log.CloseAndFlushAsync();
+        
+        Console.WriteLine("Press any key to exit...");
+        Console.ReadKey();
     }
 }

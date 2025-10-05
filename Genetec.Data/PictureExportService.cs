@@ -30,14 +30,43 @@ public class PictureExportService(GenetecDbContext context, ILogger<PictureExpor
     public async Task<int> ExportCardholderPicturesAsync(string? directory,
         CancellationToken cancellationToken = default)
     {
+        return await ExportInternalAsync(directory, null, cancellationToken);
+    }
+
+    /// <summary>
+    /// Export only the specified UpIds' pictures to the given directory.
+    /// </summary>
+    /// <param name="directory">Destination directory. If null/empty, defaults to "exported-pictures".</param>
+    /// <param name="upIds">Collection of UpIds to export. If null or empty, nothing will be exported.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Number of files successfully exported.</returns>
+    public async Task<int> ExportCardholderPicturesAsync(string? directory, IEnumerable<string> upIds,
+        CancellationToken cancellationToken = default)
+    {
+        var set = upIds?.Where(s => !string.IsNullOrWhiteSpace(s))
+            .Select(s => s.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase) ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (set.Count != 0)
+        {
+            return await ExportInternalAsync(directory, set, cancellationToken);
+        }
+
+        _logger.LogInformation("No UpIds provided for picture export. Skipping.");
+        return 0;
+    }
+
+    private async Task<int> ExportInternalAsync(string? directory, HashSet<string>? upIdFilter,
+        CancellationToken cancellationToken)
+    {
         var targetDir = string.IsNullOrWhiteSpace(directory)
             ? Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, "exported-pictures"))
             : Path.GetFullPath(directory!);
 
         Directory.CreateDirectory(targetDir);
-        
+
         var success = 0;
-        await foreach (var chunk in FetchAsync(cancellationToken))
+        await foreach (var chunk in FetchAsync(upIdFilter, cancellationToken))
         {
             foreach (var ch in chunk)
             {
@@ -67,16 +96,24 @@ public class PictureExportService(GenetecDbContext context, ILogger<PictureExpor
         return success;
     }
 
-    private IAsyncEnumerable<List<CardHolderPicture>> FetchAsync(CancellationToken cancellationToken = default)
+    private IAsyncEnumerable<List<CardHolderPicture>> FetchAsync(HashSet<string>? upIdFilter,
+        CancellationToken cancellationToken = default)
     {
         // Prepare the query: only the data we need
         var query = _context.Cardholders
             .AsNoTracking()
             .Include(c => c.PictureNavigation)
-            .Where(c => c.UpId != null && c.Picture != null && c.PictureNavigation != null)
-            .Select(c => new CardHolderPicture { UpId = c.UpId, Contents = c.PictureNavigation!.Contents, Extension = c.PictureNavigation.Extension });
+            .Where(c => c.UpId != null && c.Picture != null && c.PictureNavigation != null);
 
-        return query.FetchAsync(chunkSize: 1000, cancellationToken: cancellationToken);
+        if (upIdFilter != null)
+        {
+            query = query.Where(c => upIdFilter.Contains(c.UpId!));
+        }
+
+        var projection = query.Select(c => new CardHolderPicture
+            { UpId = c.UpId!, Contents = c.PictureNavigation!.Contents, Extension = c.PictureNavigation.Extension });
+
+        return projection.FetchAsync(chunkSize: 1000, cancellationToken: cancellationToken);
     }
 
     private static string? SanitizeExtension(string? extension)
