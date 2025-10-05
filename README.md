@@ -146,6 +146,55 @@ dotnet ef dbcontext scaffold "Server=172.25.15.123\ACCESOS;Database=Directory1;T
  ORDER BY NormalizedEMPLID, EMPLID_A, EMPLID_B;
 ```
 
+#### Normalize EmpId with size 8 in Genetec
+> This consider the AnthologyData table was updated before syncing.
+> *Run this for Cardholder, CustomFieldValue and Entity tables*
+
+```sql
+USE Genetec;
+BEGIN TRANSACTION;
+
+UPDATE c
+SET c.UpId = v.EMPLID
+    FROM dbo.Cardholder c
+JOIN v_UsuariosUnificados v
+ON RIGHT(v.EMPLID, 7) = c.UpId
+WHERE LEN(v.EMPLID) = 8
+  AND LEN(c.UpId) = 7;
+
+-- Revisa cuántos registros se afectarían
+SELECT @@ROWCOUNT AS RegistrosActualizados;
+
+-- Si todo luce correcto:
+-- COMMIT TRANSACTION;
+
+-- Si quieres revertir:
+-- ROLLBACK TRANSACTION;
+
+```
+
+Run this to update the UpID in genetec's custom value
+```sql
+BEGIN TRANSACTION;
+
+UPDATE c
+SET c.CF30fd60cbf46340be8a4e8076dcdae701 = v.EMPLID
+FROM dbo.CustomFieldValue c
+         JOIN AnthologyData v
+              ON RIGHT(v.EMPLID, 7) = c.CF30fd60cbf46340be8a4e8076dcdae701
+WHERE LEN(v.EMPLID) = 8
+  AND LEN(c.CF30fd60cbf46340be8a4e8076dcdae701) = 7;
+
+-- Revisa cuántos registros se afectarían
+SELECT @@ROWCOUNT AS RegistrosActualizados;
+
+-- Si todo luce correcto:
+COMMIT TRANSACTION;
+
+-- Si quieres revertir:
+-- ROLLBACK TRANSACTION;
+```
+
 ## GenetecSyncConsole usage additions
 - Export all pictures to default folder:
   - GenetecSyncConsole --export-pictures
