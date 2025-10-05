@@ -10,9 +10,7 @@ public abstract class Repository(AppDbContext context)
     protected virtual IQueryable<VUsuariosUnificado> Query() => context.VUsuariosUnificados.Select(e =>
         new VUsuariosUnificado
         {
-            Emplid = e.Emplid.Length > 7
-                ? e.Emplid.Substring(e.Emplid.Length - 7, 7)
-                : e.Emplid,
+            Emplid = e.Emplid,
             FirstName = e.FirstName,
             LastName = e.LastName,
             SecondLastName = e.SecondLastName,
