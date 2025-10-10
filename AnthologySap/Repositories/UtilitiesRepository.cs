@@ -24,7 +24,10 @@ public class UtilitiesRepository(AppDbContext context) : IUtilitiesRepository
                             && (a.ProgStatus == "Egresado" || a.ProgStatus == "EGRP"))
                     )
             )
-            .Select(e => e.Emplid)
+            .Select(e => e.Emplid.Length > 7
+                ? e.Emplid.Substring(e.Emplid.Length - 7, 7)
+                : e.Emplid
+            )
             .Distinct()
             .ToListAsync(cancellationToken);
 
@@ -35,7 +38,7 @@ public class UtilitiesRepository(AppDbContext context) : IUtilitiesRepository
     {
         var result = await context.VUsuariosUnificados
             .Where(e => e.Lastupddttm != null && e.Emplid != null && e.Lastupddttm!.Value.Date == date.Date)
-            .Select(e => e.Emplid)
+            .Select(e => e.Emplid!.Length > 7 ? e.Emplid.Substring(e.Emplid.Length - 7, 7) : e.Emplid)
             .Select(id => id!.Trim())
             .Distinct()
             .ToListAsync(cancellationToken);
