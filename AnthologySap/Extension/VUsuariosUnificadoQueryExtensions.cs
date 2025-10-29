@@ -56,12 +56,43 @@ public static class VUsuariosUnificadoQueryExtensions
 
     // Cross-category exclusion used by AnthologySap Inactive repositories
     // Note: name mirrors UP.Data counterpart semantics (excludes any active match)
-    public static IQueryable<VUsuariosUnificado> WhereAnyActiveProfile(
+    public static IQueryable<VUsuariosUnificado> WhereNoActiveProfile(
         this IQueryable<VUsuariosUnificado> query,
         AppDbContext context
     )
     {
         return query.Where(i => !context.VUsuariosUnificados
+            .Where(a =>
+                (a.Emplid.Length > 7 ? a.Emplid.Substring(a.Emplid.Length - 7, 7) : a.Emplid)
+                == i.Emplid
+            )
+            .Any(a =>
+                // Active employees
+                (a.StatusField == "A" && a.ProgStatus == "Activo" && a.AsgmtType == "Empleado")
+                // Active professors
+                || (a.StatusField == "A" && a.ProgStatus == "Activo" && a.AsgmtType == "Profesor")
+                // Active students
+                || (
+                    (a.ProgStatus == "Activo" && a.StatusField == "ATT")
+                    || (a.ProgStatus == "Matriculado" && a.StatusField == "FUT")
+                ) && EF.Constant(StudentTypes).Contains(a.AsgmtType)
+                // Graduated
+                || (
+                    (a.ProgStatus == "Titulado" && a.StatusField == "GRAD")
+                    || (a.ProgStatus == "Egresado" && a.StatusField == "COMPLETE")
+                ) && EF.Constant(StudentTypes).Contains(a.AsgmtType)
+                // Retired employees
+                || (a.StatusField == "A" && a.ProgStatus == "Activo" && a.AsgmtType == "Jubilado")
+            ));
+    }
+
+    // Reverse: include only records that have at least one active profile
+    public static IQueryable<VUsuariosUnificado> WhereWithActiveProfile(
+        this IQueryable<VUsuariosUnificado> query,
+        AppDbContext context
+    )
+    {
+        return query.Where(i => context.VUsuariosUnificados
             .Where(a =>
                 (a.Emplid.Length > 7 ? a.Emplid.Substring(a.Emplid.Length - 7, 7) : a.Emplid)
                 == i.Emplid

@@ -14,7 +14,7 @@ public class InactiveStudentsRepository(AppDbContext context)
         return base.Query()
             .WhereStudentTypes()
             .WhereInactiveStudents()
-            .WhereAnyActiveProfile(Context);
+            .WhereNoActiveProfile(Context);
     }
 
     public IAsyncEnumerable<List<UpRecordValue>> FetchAsync(

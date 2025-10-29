@@ -14,7 +14,7 @@ public class InactiveEmployeesRepository(AppDbContext context)
             .Query()
             .WhereEmployeeType()
             .WhereInactiveCollaborator()
-            .WhereAnyActiveProfile(Context);
+            .WhereNoActiveProfile(Context);
     }
 
     public IAsyncEnumerable<List<UpRecordValue>> FetchAsync(

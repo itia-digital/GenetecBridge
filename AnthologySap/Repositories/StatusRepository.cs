@@ -1,3 +1,4 @@
+using AnthologySap.Extension;
 using AnthologySap.Models;
 using Core.Data.Extensions;
 using Core.Data.Repositories;
@@ -7,7 +8,7 @@ namespace AnthologySap.Repositories;
 public class StatusRepository(AppDbContext context) : IStatusRepository
 {
     private IQueryable<string> GetActiveRecordsIds() => context.VUsuariosUnificados
-        .Where(e => !InActiveStatuses.Contains(e.StatusField) && !string.IsNullOrEmpty(e.Emplid))
+        .WhereWithActiveProfile(context)
         .Select(e => e.Emplid!)
         .Distinct()
         .OrderBy(e => e)
@@ -16,7 +17,7 @@ public class StatusRepository(AppDbContext context) : IStatusRepository
     private static readonly string[] InActiveStatuses = ["I", "DROP"];
 
     private IQueryable<string> GetInactiveRecordsIds() => context.VUsuariosUnificados
-        .Where(e => InActiveStatuses.Contains(e.StatusField) && !string.IsNullOrEmpty(e.Emplid))
+        .WhereNoActiveProfile(context)
         .Select(e => e.Emplid!)
         .Distinct()
         .OrderBy(e => e)
