@@ -8,7 +8,9 @@ namespace UP.Data.Repositories;
 
 public abstract class Repository(AppDbContext context)
 {
-    protected virtual IQueryable<PsUpIdGralTVw> Query() => context.PsUpIdGralTVws.Select(
+    protected readonly AppDbContext Context = context;
+    
+    protected virtual IQueryable<PsUpIdGralTVw> Query() => Context.PsUpIdGralTVws.Select(
         e => new PsUpIdGralTVw
         {
             Emplid = e.Emplid,

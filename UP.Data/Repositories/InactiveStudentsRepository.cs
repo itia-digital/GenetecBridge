@@ -1,21 +1,22 @@
 ﻿using Core.Data;
 using Core.Data.Repositories;
-using Microsoft.EntityFrameworkCore;
 using UP.Data.Context;
 using UP.Data.Models;
+using UP.Data.Extension;
 
 namespace UP.Data.Repositories;
 
 public class InactiveStudentsRepository(AppDbContext context)
-    : Repository(context: context),
+    : Repository(context),
         IInactiveStudentsRepository
 {
     protected override IQueryable<PsUpIdGralTVw> Query()
     {
-        string[] statuses = ["CN", "DC", "DE", "LA"];
         return base
-            .Query()
-            .Where(e => EF.Constant(statuses).Contains(e.StatusField));
+                .Query()
+                .WhereInactiveStudentStatuses()
+                .WhereAnyActiveProfile(Context)
+            ;
     }
 
     public IAsyncEnumerable<List<UpRecordValue>> FetchAsync(

@@ -1,17 +1,18 @@
 ﻿using Core.Data;
 using Core.Data.Repositories;
 using UP.Data.Context;
+using UP.Data.Extension;
 using UP.Data.Models;
 
 namespace UP.Data.Repositories;
 
 public class ActiveStudentsRepository(AppDbContext context)
-    : Repository(context: context),
+    : Repository(context),
         IActiveStudentsRepository
 {
     protected override IQueryable<PsUpIdGralTVw> Query()
     {
-        return base.Query().Where(e => e.StatusField == "AC");
+        return base.Query().WhereActiveStudent();
     }
 
     public IAsyncEnumerable<List<UpRecordValue>> FetchAsync(

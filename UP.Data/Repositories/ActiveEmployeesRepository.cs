@@ -1,21 +1,21 @@
 ﻿using Core.Data;
 using Core.Data.Repositories;
-using Microsoft.EntityFrameworkCore;
 using UP.Data.Context;
 using UP.Data.Models;
+using UP.Data.Extension;
 
 namespace UP.Data.Repositories;
 
 public class ActiveEmployeesRepository(AppDbContext context)
-    : Repository(context: context), IActiveEmployeesRepository
+    : Repository(context), IActiveEmployeesRepository
 {
     protected override IQueryable<PsUpIdGralTVw> Query()
     {
-        string[] payGroup = ["UPA001", "UPC001", "UPE001", "UPG001", "UPM001"];
         return base
-            .Query()
-            .Where(e => e.StatusField == "A"
-                        && EF.Constant(payGroup).Contains(e.GpPaygroup));
+                .Query()
+                .WhereEmployeePayGroup()
+                .WhereActiveCollaborator()
+            ;
     }
 
     public IAsyncEnumerable<List<UpRecordValue>> FetchAsync(

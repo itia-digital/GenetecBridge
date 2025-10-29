@@ -6,7 +6,7 @@ using UP.Data.Models;
 namespace UP.Data.Repositories;
 
 public class GraduatedRepository(AppDbContext context)
-    : Repository(context: context), IGraduatedRepository
+    : Repository(context), IGraduatedRepository
 {
     protected override IQueryable<PsUpIdGralTVw> Query()
     {
