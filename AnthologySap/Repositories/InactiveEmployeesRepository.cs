@@ -1,22 +1,20 @@
 ﻿using AnthologySap.Models;
 using Core.Data;
 using Core.Data.Repositories;
-using Microsoft.EntityFrameworkCore;
+using AnthologySap.Extension;
 
 namespace AnthologySap.Repositories;
 
 public class InactiveEmployeesRepository(AppDbContext context)
-    : Repository(context: context), IInactiveEmployeesRepository
+    : Repository(context), IInactiveEmployeesRepository
 {
     protected override IQueryable<VUsuariosUnificado> Query()
     {
         return base
             .Query()
-            .Where(e =>
-                e.StatusField == "I"
-                && e.ProgStatus == "Inactivo"
-                && e.AsgmtType == "Empleado"
-            );
+            .WhereEmployeeType()
+            .WhereInactiveCollaborator()
+            .WhereAnyActiveProfile(Context);
     }
 
     public IAsyncEnumerable<List<UpRecordValue>> FetchAsync(

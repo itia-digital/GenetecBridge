@@ -7,7 +7,9 @@ namespace AnthologySap.Repositories;
 
 public abstract class Repository(AppDbContext context)
 {
-    protected virtual IQueryable<VUsuariosUnificado> Query() => context.VUsuariosUnificados.Select(e =>
+    protected readonly AppDbContext Context = context;
+    
+    protected virtual IQueryable<VUsuariosUnificado> Query() => Context.VUsuariosUnificados.Select(e =>
         new VUsuariosUnificado
         {
             Emplid = e.Emplid.Length > 7

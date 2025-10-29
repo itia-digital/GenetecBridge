@@ -1,25 +1,19 @@
 ﻿using AnthologySap.Models;
 using Core.Data;
 using Core.Data.Repositories;
-using Microsoft.EntityFrameworkCore;
+using AnthologySap.Extension;
 
 namespace AnthologySap.Repositories;
 
 public class ActiveStudentsRepository(AppDbContext context)
-    : Repository(context: context),
+    : Repository(context),
         IActiveStudentsRepository
 {
     protected override IQueryable<VUsuariosUnificado> Query()
     {
-        string[] type = ["Doctorado", "Especialidad", "Licenciatura", "Maestria", "Preparatoria"];
         return base.Query()
-            .Where(e =>
-                (
-                    e.ProgStatus == "Activo" && e.StatusField == "ATT"
-                    || e.ProgStatus == "Matriculado" && e.StatusField == "FUT"
-                )
-                && EF.Constant(type).Contains(e.AsgmtType)
-            );
+            .WhereStudentTypes()
+            .WhereActiveStudents();
     }
 
     public IAsyncEnumerable<List<UpRecordValue>> FetchAsync(

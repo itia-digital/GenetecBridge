@@ -1,22 +1,19 @@
-﻿using AnthologySap.Models;
+﻿using AnthologySap.Extension;
+using AnthologySap.Models;
 using Core.Data;
 using Core.Data.Repositories;
-using Microsoft.EntityFrameworkCore;
 
 namespace AnthologySap.Repositories;
 
 public class RetiredEmployeesRepository(AppDbContext context)
-    : Repository(context: context), IRetiredRepository
+    : Repository(context), IRetiredRepository
 {
     protected override IQueryable<VUsuariosUnificado> Query()
     {
         return base
             .Query()
-            .Where(e =>
-                e.StatusField == "A"
-                && e.ProgStatus == "Activo"
-                && e.AsgmtType == "Jubilado"
-            );
+            .WhereRetiredType()
+            .WhereActiveCollaborator();
     }
 
     public IAsyncEnumerable<List<UpRecordValue>> FetchAsync(

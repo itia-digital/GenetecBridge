@@ -1,23 +1,20 @@
 ﻿using AnthologySap.Models;
 using Core.Data;
 using Core.Data.Repositories;
-using Microsoft.EntityFrameworkCore;
+using AnthologySap.Extension;
 
 namespace AnthologySap.Repositories;
 
 public class ActiveProfessorsRepository(AppDbContext context)
-    : Repository(context: context),
+    : Repository(context),
         IActiveProfessorsRepository
 {
     protected override IQueryable<VUsuariosUnificado> Query()
     {
         return base
             .Query()
-            .Where(e =>
-                e.StatusField == "A"
-                && e.ProgStatus == "Activo"
-                && e.AsgmtType == "Profesor"
-            );
+            .WhereProfessorType()
+            .WhereActiveCollaborator();
     }
 
     public IAsyncEnumerable<List<UpRecordValue>> FetchAsync(
