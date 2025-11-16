@@ -44,11 +44,8 @@ public partial class AppDbContext : DbContext
         }
 
         // Log only EXECUTED SQL commands from EF Core (no parameter dumps or other events)
-        optionsBuilder.LogTo(
-                message => _logger?.LogInformation("{Message}", message),
-                new[] { RelationalEventId.CommandExecuted },
-                LogLevel.Information)
-            .EnableSensitiveDataLogging(false);
+        optionsBuilder.LogTo(message => _logger?.LogDebug("{Message}", message), [RelationalEventId.CommandExecuted])
+            .EnableSensitiveDataLogging();
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

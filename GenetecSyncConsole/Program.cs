@@ -14,8 +14,20 @@ class Program
 {
     static async Task Main(string[] args)
     {
-        await RunAsync(args);
+        try
+        {
+            await RunAsync(args);
+        }
+        catch (Exception ex)
+        {
+            Log.Fatal(ex, "A fatal unhandled exception occurred.");
+        }
+        finally
+        {
+            await Log.CloseAndFlushAsync();
+        }
     }
+
 
     private static async Task RunAsync(string[] args)
     {
@@ -28,7 +40,6 @@ class Program
 
         // Emit a startup log via both pipelines for diagnostics
         logger.LogInformation("GenetecSyncConsole starting at {UtcNow}", DateTime.UtcNow);
-        Log.Information("[Serilog] GenetecSyncConsole starting at {UtcNow}", DateTime.UtcNow);
 
         var cancellationTokenSource = new CancellationTokenSource();
         Console.CancelKeyPress += (_, eventArgs) =>
@@ -154,38 +165,46 @@ class Program
             }
         }
 
-        // Flush logs
-        await Log.CloseAndFlushAsync();
-    }
+        // Flush handled by Main's finally block
+        }
 
     private static ILoggerFactory CreateLogger()
     {
-        // Configure Serilog to log to console and rolling weekly log files
         var logsDir = Path.Combine(AppContext.BaseDirectory, "logs");
         Directory.CreateDirectory(logsDir);
-        var now = DateTime.Now;
-        var week = CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(now, CalendarWeekRule.FirstFourDayWeek,
-            DayOfWeek.Monday);
-        var logFilePath = Path.Combine(logsDir, $"{now:yyyy}-{now:MM}-W{week:D2}-{now:dd}.log");
 
+        var now = DateTime.Now;
+        var week = CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(
+            now, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+
+        var logFilePath = Path.Combine(
+            logsDir,
+            $"{now:yyyy}-{now:MM}-W{week:D2}-{now:dd}.log"
+        );
+
+        // Enable Serilog self-diagnostics (only printed if errors occur)
+        Serilog.Debugging.SelfLog.Enable(Console.Error);
+
+        // Configure Serilog
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Debug()
             .Enrich.FromLogContext()
+            .WriteTo.Console() // <- good for interactive runs
             .WriteTo.File(
                 path: logFilePath,
                 shared: true,
-                restrictedToMinimumLevel: LogEventLevel.Information,
-                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
+                restrictedToMinimumLevel: LogEventLevel.Debug,
+                rollingInterval: RollingInterval.Infinite,
+                outputTemplate:
+                "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
             )
             .CreateLogger();
 
+        // Forward Microsoft.Extensions.Logging -> Serilog
         return LoggerFactory.Create(builder =>
         {
             builder.ClearProviders();
-            // Also log to console for interactive runs
-            builder.AddConsole();
-            // Route Microsoft.Extensions.Logging to Serilog (which writes to File)
-            builder.AddSerilog(Log.Logger, dispose: false);
+            builder.AddSerilog(Log.Logger, dispose: false); // IMPORTANT FIX
             builder.SetMinimumLevel(LogLevel.Debug);
         });
     }
@@ -200,7 +219,6 @@ class Program
         await using var genetecDb = new GenetecDbContext();
         var statusService = new StatusSyncService(up, genetecDb, statusLogger);
         await statusService.SyncAsync(ct);
-        await Log.CloseAndFlushAsync();
     }
 
     private static async Task HandleExportPicturesAsync(ILoggerFactory loggerFactory, ILogger logger, string? exportArg,
@@ -268,7 +286,6 @@ class Program
         if (response != "y")
         {
             logger.LogInformation("Export cancelled by user.");
-            await Log.CloseAndFlushAsync();
             return;
         }
 
@@ -302,9 +319,5 @@ class Program
         }
 
         logger.LogInformation("Export completed. Files written: {Count}", count);
-        await Log.CloseAndFlushAsync();
-        
-        Console.WriteLine("Press any key to exit...");
-        Console.ReadKey();
     }
 }
