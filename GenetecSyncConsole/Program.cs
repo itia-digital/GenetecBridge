@@ -163,10 +163,10 @@ class Program
         var now = DateTime.Now;
         var week = CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(now, CalendarWeekRule.FirstFourDayWeek,
             DayOfWeek.Monday);
-        var logFilePath = Path.Combine(logsDir, $"{now:yyyy}{now:MM}-W{week:D2}.log");
+        var logFilePath = Path.Combine(logsDir, $"{now:yyyy}-{now:MM}-W{week:D2}-{now:dd}.log");
 
         Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Information()
+            .MinimumLevel.Debug()
             .Enrich.FromLogContext()
             .WriteTo.File(
                 path: logFilePath,
@@ -183,7 +183,7 @@ class Program
             builder.AddConsole();
             // Route Microsoft.Extensions.Logging to Serilog (which writes to File)
             builder.AddSerilog(Log.Logger, dispose: true);
-            builder.SetMinimumLevel(LogLevel.Information);
+            builder.SetMinimumLevel(LogLevel.Debug);
         });
     }
 
