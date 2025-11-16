@@ -31,15 +31,18 @@ class Program
 
     private static async Task RunAsync(string[] args)
     {
-        // ✅ Create Logger
-        var loggerFactory = CreateLogger();
+        // ✅ Determine log level from args (default: Information)
+        var (serilogMin, msMin) = ParseLogLevel(args);
+
+        // ✅ Create Logger with selected minimum levels
+        var loggerFactory = CreateLogger(serilogMin, msMin);
         ILogger logger = loggerFactory.CreateLogger<Program>();
 
         // Ensure EF Core (AnthologySap) uses the execution logger pipeline (not console)
         AppDbContext.ConfigureLogging(loggerFactory);
 
         // Emit a startup log via both pipelines for diagnostics
-        logger.LogInformation("GenetecSyncConsole starting at {UtcNow}", DateTime.UtcNow);
+        logger.LogInformation("GenetecSyncConsole starting at {UtcNow} with min level {MinLevel}", DateTime.UtcNow, msMin);
 
         var cancellationTokenSource = new CancellationTokenSource();
         Console.CancelKeyPress += (_, eventArgs) =>
@@ -168,7 +171,7 @@ class Program
         // Flush handled by Main's finally block
         }
 
-    private static ILoggerFactory CreateLogger()
+    private static ILoggerFactory CreateLogger(LogEventLevel serilogMinLevel, LogLevel msMinLevel)
     {
         var logsDir = Path.Combine(AppContext.BaseDirectory, "logs");
         Directory.CreateDirectory(logsDir);
@@ -187,13 +190,13 @@ class Program
 
         // Configure Serilog
         Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Debug()
+            .MinimumLevel.Is(serilogMinLevel)
             .Enrich.FromLogContext()
             .WriteTo.Console() // <- good for interactive runs
             .WriteTo.File(
                 path: logFilePath,
                 shared: true,
-                restrictedToMinimumLevel: LogEventLevel.Debug,
+                restrictedToMinimumLevel: serilogMinLevel,
                 rollingInterval: RollingInterval.Infinite,
                 outputTemplate:
                 "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
@@ -205,8 +208,84 @@ class Program
         {
             builder.ClearProviders();
             builder.AddSerilog(Log.Logger, dispose: false); // IMPORTANT FIX
-            builder.SetMinimumLevel(LogLevel.Debug);
+            builder.SetMinimumLevel(msMinLevel);
         });
+    }
+
+    private static (LogEventLevel serilogLevel, LogLevel msLevel) ParseLogLevel(string[] args)
+    {
+        // Default to Information unless overridden by --verbosity
+        string? levelArg = null;
+        for (int i = 0; i < args.Length; i++)
+        {
+            var a = args[i];
+            if (a.StartsWith("--verbosity", StringComparison.OrdinalIgnoreCase))
+            {
+                var eqIdx = a.IndexOf('=');
+                if (eqIdx > 0 && eqIdx < a.Length - 1)
+                {
+                    levelArg = a[(eqIdx + 1)..];
+                }
+                else if (i + 1 < args.Length && !args[i + 1].StartsWith("--"))
+                {
+                    levelArg = args[i + 1];
+                }
+                break;
+            }
+        }
+
+        return !TryMapLevel(levelArg, out var serilogLevel, out var msLevel) 
+            ? (LogEventLevel.Information, LogLevel.Information) 
+            : (serilogLevel, msLevel);
+    }
+
+    private static bool TryMapLevel(string? value, out LogEventLevel serilogLevel, out LogLevel msLevel)
+    {
+        serilogLevel = LogEventLevel.Information;
+        msLevel = LogLevel.Information;
+        if (string.IsNullOrWhiteSpace(value))
+            return false;
+
+        switch (value.Trim().ToLowerInvariant())
+        {
+            case "trace":
+            case "verbose":
+            case "v":
+                serilogLevel = LogEventLevel.Verbose;
+                msLevel = LogLevel.Trace;
+                return true;
+            case "debug":
+            case "d":
+                serilogLevel = LogEventLevel.Debug;
+                msLevel = LogLevel.Debug;
+                return true;
+            case "information":
+            case "info":
+            case "i":
+                serilogLevel = LogEventLevel.Information;
+                msLevel = LogLevel.Information;
+                return true;
+            case "warning":
+            case "warn":
+            case "w":
+                serilogLevel = LogEventLevel.Warning;
+                msLevel = LogLevel.Warning;
+                return true;
+            case "error":
+            case "e":
+                serilogLevel = LogEventLevel.Error;
+                msLevel = LogLevel.Error;
+                return true;
+            case "fatal":
+            case "critical":
+            case "c":
+            case "f":
+                serilogLevel = LogEventLevel.Fatal;
+                msLevel = LogLevel.Critical;
+                return true;
+            default:
+                return false;
+        }
     }
 
     private static async Task HandleUpdateStatusAsync(ILoggerFactory loggerFactory, ILogger logger,
