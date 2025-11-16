@@ -23,6 +23,9 @@ class Program
         var loggerFactory = CreateLogger();
         ILogger logger = loggerFactory.CreateLogger<Program>();
 
+        // Ensure EF Core (AnthologySap) uses the execution logger pipeline (not console)
+        AppDbContext.ConfigureLogging(loggerFactory);
+
         // Emit a startup log via both pipelines for diagnostics
         logger.LogInformation("GenetecSyncConsole starting at {UtcNow}", DateTime.UtcNow);
         Log.Information("[Serilog] GenetecSyncConsole starting at {UtcNow}", DateTime.UtcNow);
@@ -182,7 +185,7 @@ class Program
             // Also log to console for interactive runs
             builder.AddConsole();
             // Route Microsoft.Extensions.Logging to Serilog (which writes to File)
-            builder.AddSerilog(Log.Logger, dispose: true);
+            builder.AddSerilog(Log.Logger, dispose: false);
             builder.SetMinimumLevel(LogLevel.Debug);
         });
     }
