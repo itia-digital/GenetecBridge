@@ -75,6 +75,7 @@ public static class LogSetupHelper
             if (string.IsNullOrWhiteSpace(region))
             {
                 // Region is mandatory to target CloudWatch
+                Serilog.Debugging.SelfLog.WriteLine("CloudWatch configuration skipped: AWS_REGION env var is not set.");
                 return;
             }
 
@@ -92,7 +93,12 @@ public static class LogSetupHelper
 
             // 🚀 Ensure log-group exists BEFORE hooking Serilog
             var logGroupName = $"ALUSA-Genetec-UP-{GetSafeMachineName()}";
-            await EnsureLogGroupExistsAsync(client, logGroupName, cancellationToken);
+            var ensured = await EnsureLogGroupExistsAsync(client, logGroupName, cancellationToken);
+            if (!ensured)
+            {
+                Serilog.Debugging.SelfLog.WriteLine($"CloudWatch sink disabled: Could not ensure log group '{logGroupName}'. Falling back to console/file only.");
+                return;
+            }
 
             var options = new CloudWatchSinkOptions
             {
@@ -209,15 +215,17 @@ public static class LogSetupHelper
         }
     }
 
-    private static async Task EnsureLogGroupExistsAsync(
+    private static async Task<bool> EnsureLogGroupExistsAsync(
         IAmazonCloudWatchLogs client, string logGroupName,
         CancellationToken cancellationToken)
     {
-        var attempts = 0;
+        // Exponential backoff with jitter
+        const int maxAttempts = 7;
+        var delayMs = 500;
 
-        while (attempts < 10)
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
-            attempts++;
+            cancellationToken.ThrowIfCancellationRequested();
 
             try
             {
@@ -230,7 +238,7 @@ public static class LogSetupHelper
                 if (response.LogGroups.Any(g => g.LogGroupName == logGroupName))
                 {
                     // Found — we’re ready
-                    return;
+                    return true;
                 }
 
                 // Not found — create it
@@ -239,16 +247,63 @@ public static class LogSetupHelper
                     LogGroupName = logGroupName
                 }, cancellationToken);
 
-                // AWS may need time to propagate
-                await Task.Delay(2000, cancellationToken);
+                // Propagation delay
+                await Task.Delay(1500, cancellationToken);
+                return true;
             }
-            catch
+            catch (Amazon.CloudWatchLogs.Model.ResourceAlreadyExistsException)
             {
-                // Wait a bit and retry
-                await Task.Delay(1000, cancellationToken);
+                // Created by a race from another instance
+                return true;
             }
+            catch (AmazonServiceException ase) when (IsAuthError(ase))
+            {
+                Serilog.Debugging.SelfLog.WriteLine($"CloudWatch log group ensure failed due to auth/credentials issue: {ase.Message} (Code={ase.ErrorCode})");
+                return false;
+            }
+            catch (AmazonServiceException ase) when (IsRetryable(ase))
+            {
+                Serilog.Debugging.SelfLog.WriteLine($"CloudWatch log group ensure transient error (attempt {attempt}/{maxAttempts}): {ase.Message} (HTTP {(int)ase.StatusCode})");
+                // fallthrough to backoff
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception e)
+            {
+                Serilog.Debugging.SelfLog.WriteLine($"CloudWatch log group ensure failed (attempt {attempt}/{maxAttempts}): {e.Message}");
+                // For unexpected errors, break early unless more attempts remain
+                if (attempt == maxAttempts)
+                    return false;
+            }
+
+            // Backoff with jitter
+            var jitter = Random.Shared.Next(0, 150);
+            await Task.Delay(delayMs + jitter, cancellationToken);
+            delayMs = Math.Min(delayMs * 2, 8000);
         }
 
-        throw new Exception($"CloudWatch Log Group '{logGroupName}' was not created after {attempts} attempts.");
+        Serilog.Debugging.SelfLog.WriteLine($"CloudWatch log group '{logGroupName}' was not created after {maxAttempts} attempts.");
+        return false;
+    }
+
+    private static bool IsAuthError(AmazonServiceException ase)
+    {
+        // Common auth/credential error codes: AccessDeniedException, UnrecognizedClientException, InvalidClientTokenId
+        var code = ase.ErrorCode ?? string.Empty;
+        return code.Contains("AccessDenied", StringComparison.OrdinalIgnoreCase)
+               || code.Contains("UnrecognizedClient", StringComparison.OrdinalIgnoreCase)
+               || code.Contains("InvalidClientTokenId", StringComparison.OrdinalIgnoreCase)
+               || (int)ase.StatusCode == 401 || (int)ase.StatusCode == 403;
+    }
+
+    private static bool IsRetryable(AmazonServiceException ase)
+    {
+        // Retry on throttling and service availability issues
+        var code = ase.ErrorCode ?? string.Empty;
+        if (code.Contains("Throttl", StringComparison.OrdinalIgnoreCase)) return true; // ThrottlingException
+        var status = (int)ase.StatusCode;
+        return status == 429 || status == 500 || status == 502 || status == 503 || status == 504;
     }
 }
