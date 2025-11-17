@@ -31,11 +31,20 @@ class Program
 
     private static async Task RunAsync(string[] args)
     {
+        var cancellationTokenSource = new CancellationTokenSource();
+        Console.CancelKeyPress += (_, eventArgs) =>
+        {
+            cancellationTokenSource.Cancel();
+            eventArgs.Cancel = true; // Prevents immediate termination
+            Console.WriteLine("CTRL+C pressed. Cancelling...");
+            Console.ReadLine();
+        };
+
         // ✅ Determine log level from args (default: Information)
         var (serilogMin, msMin) = LogSetupHelper.ParseLogLevel(args);
 
         // ✅ Create Logger with selected minimum levels
-        var loggerFactory = LogSetupHelper.CreateLogger(serilogMin, msMin);
+        var loggerFactory = await LogSetupHelper.CreateLoggerAsync(serilogMin, msMin, cancellationTokenSource.Token);
         ILogger logger = loggerFactory.CreateLogger<Program>();
 
         // Ensure EF Core (AnthologySap) uses the execution logger pipeline (not console)
@@ -44,15 +53,7 @@ class Program
         // Emit a startup log via both pipelines for diagnostics
         logger.LogInformation("GenetecSyncConsole starting at {UtcNow} with min level {MinLevel}", DateTime.UtcNow,
             msMin);
-
-        var cancellationTokenSource = new CancellationTokenSource();
-        Console.CancelKeyPress += (_, eventArgs) =>
-        {
-            logger.LogWarning("CTRL+C pressed. Cancelling...");
-            cancellationTokenSource.Cancel();
-            eventArgs.Cancel = true; // Prevents immediate termination
-        };
-
+        
         // ✅ Check for status update flag
         if (args.Any(a => a.Equals("--update-status", StringComparison.OrdinalIgnoreCase)))
         {
@@ -168,8 +169,6 @@ class Program
                 }
             }
         }
-
-        // Flush handled by Main's finally block
     }
 
     private static async Task HandleUpdateStatusAsync(ILoggerFactory loggerFactory, ILogger logger,
