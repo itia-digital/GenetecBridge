@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging;
 
 namespace AnthologySap.Models;
@@ -7,7 +6,6 @@ namespace AnthologySap.Models;
 public partial class AppDbContext : DbContext
 {
     private static ILoggerFactory? _loggerFactory;
-    private static ILogger? _logger;
 
     // Allows the host to provide the execution logger factory so EF logging
     // is routed through Microsoft.Extensions.Logging (e.g., Serilog sink),
@@ -15,7 +13,7 @@ public partial class AppDbContext : DbContext
     public static void ConfigureLogging(ILoggerFactory loggerFactory)
     {
         _loggerFactory = loggerFactory;
-        _logger = loggerFactory.CreateLogger<AppDbContext>();
+        loggerFactory.CreateLogger<AppDbContext>();
     }
 
     public AppDbContext()
@@ -43,9 +41,12 @@ public partial class AppDbContext : DbContext
             optionsBuilder.UseLoggerFactory(_loggerFactory);
         }
 
-        // Log only EXECUTED SQL commands from EF Core (no parameter dumps or other events)
-        optionsBuilder.LogTo(message => _logger?.LogDebug("{Message}", message), [RelationalEventId.CommandExecuted])
-            .EnableSensitiveDataLogging();
+        // Configure EF logging levels
+        optionsBuilder.EnableSensitiveDataLogging();
+        optionsBuilder.EnableDetailedErrors();
+
+        // Throttle EF log categories
+        optionsBuilder.EnableServiceProviderCaching();
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
