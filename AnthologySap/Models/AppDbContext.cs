@@ -6,13 +6,18 @@ namespace AnthologySap.Models;
 public partial class AppDbContext : DbContext
 {
     private static ILoggerFactory? _loggerFactory;
+    private static LogLevel _minLogLevel = LogLevel.Information;
 
     // Allows the host to provide the execution logger factory so EF logging
     // is routed through Microsoft.Extensions.Logging (e.g., Serilog sink),
     // not the console.
-    public static void ConfigureLogging(ILoggerFactory loggerFactory)
+
+    // Overload that accepts the minimum Microsoft.Extensions.Logging level
+    // so we can turn EF Core logging ON only when running at Debug or lower.
+    public static void ConfigureLogging(ILoggerFactory loggerFactory, LogLevel minLevel = LogLevel.Information)
     {
         _loggerFactory = loggerFactory;
+        _minLogLevel = minLevel;
         loggerFactory.CreateLogger<AppDbContext>();
     }
 
@@ -35,17 +40,16 @@ public partial class AppDbContext : DbContext
                 "Server=10.80.0.9;Database=AnthologySync;TrustServerCertificate=True;Integrated Security=True;",
                 sqlOptions => sqlOptions.CommandTimeout(60));
 
-        // Route EF logs to Microsoft.Extensions.Logging pipeline if provided
-        if (_loggerFactory != null)
+        var enableEfLogging = _minLogLevel <= LogLevel.Debug;
+
+        if (enableEfLogging && _loggerFactory != null)
         {
             optionsBuilder.UseLoggerFactory(_loggerFactory);
+            optionsBuilder.EnableSensitiveDataLogging();
+            optionsBuilder.EnableDetailedErrors();
         }
 
-        // Configure EF logging levels
-        optionsBuilder.EnableSensitiveDataLogging();
-        optionsBuilder.EnableDetailedErrors();
-
-        // Throttle EF log categories
+        // Keep provider caching enabled regardless of log level
         optionsBuilder.EnableServiceProviderCaching();
     }
 

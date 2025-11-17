@@ -48,7 +48,8 @@ class Program
         ILogger logger = loggerFactory.CreateLogger<Program>();
 
         // Ensure EF Core (AnthologySap) uses the execution logger pipeline (not console)
-        AppDbContext.ConfigureLogging(loggerFactory);
+        // and only emits EF logs when the selected min level is Debug (or lower).
+        AppDbContext.ConfigureLogging(loggerFactory, msMin);
 
         // Emit a startup log via both pipelines for diagnostics
         logger.LogInformation("GenetecSyncConsole starting at {UtcNow} with min level {MinLevel}", DateTime.UtcNow,
