@@ -1,4 +1,9 @@
-﻿
+﻿## Update code in UP server
+
+```shell
+dotnet publish -c Release -r win-x64 --self-contained true -o "C:\Alusa" /p:PublishSingleFile=true
+```
+
 ## Insert a new cardholder in genetec
 Trace
 ```sql
