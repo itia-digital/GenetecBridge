@@ -157,11 +157,7 @@ public class SyncWorker(GenetecDbContext context, ILogger logger)
             },
             cancellationToken);
 
-        logger.LogInformation("Synced {count} {typeOfRecord} records:", records.Count, typeOfRecord);
-        foreach (var record in records)
-        {
-            logger.LogInformation("   {UpId} - {Name}", record.Id, record.FullName);;
-        }
+        logger.LogInformation("  >> Synced {count} {typeOfRecord} records:", records.Count, typeOfRecord);
     }
 
     public async Task ResetAsync(CancellationToken cancellationToken = default)
