@@ -244,14 +244,6 @@ class Program
         }
 
         var scopeText = filterDate.HasValue ? $"modified on {filterDate:yyyy-MM-dd} (per Anthology/SAP)" : "(all)";
-        Console.Write($"This will export cardholder pictures {scopeText} to: {effectiveDir}\nProceed? [y/N] ");
-        var response = Console.ReadLine()?.Trim().ToLowerInvariant();
-        if (response != "y")
-        {
-            logger.LogInformation("Export cancelled by user.");
-            return;
-        }
-
         logger.LogInformation("--export-pictures flag detected. Exporting pictures to {Dir} {Scope}",
             effectiveDir, scopeText);
         await using var genetecDb = new GenetecDbContext();
